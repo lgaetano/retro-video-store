@@ -3,12 +3,21 @@ from app.models.customer import Customer
 from app.models.rental import Rental
 from app.models.video import Video
 from flask import Blueprint, jsonify,request, make_response, abort 
+from datetime import date
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 
 
 # TODO ZIP CODE VALIDATION,
 #       PHONE NUM VALIDATION,
+def timestamp():
+    """
+    Determines current time and formats to specficiation.
+    e.g. "Wed, 16 Apr 2014 21:40:20 -0700"""
+    now = date.today().strftime("%a, %d %b %Y %X %z")
+    # now = now.strftime("%a, %d %b %Y %X %z")
+    return now
+
 
 @customers_bp.route("", methods=["GET"])
 def get_all_customer():
@@ -24,6 +33,23 @@ def get_customer_by_id(customer_id):
     customer = Customer.query.get_or_404(customer_id)
 
     return jsonify(customer.to_dict())
+
+@customers_bp.route("", methods=["POST"])
+def create_customer():
+    """Creates a customer from JSON user input."""
+    response_body = request.get_json()
+
+    mandatory_fields = ["name", "postal_code", "phone"]
+    for field in mandatory_fields:
+        if field not in response_body:
+            return jsonify(f"{field} missing. Unable to create cusomer account."), 400
+
+    new_customer = Customer(
+        name=response_body.name,
+        registered_at=timestamp(),
+        postal_code=response_body.postal_code,
+        phone=response_body.phone
+    )
 
 @customers_bp.route("<customer_id>", methods=["PUT"])
 def update_customer_by_id(customer_id):
