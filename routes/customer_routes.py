@@ -21,6 +21,13 @@ def timestamp():
     print(now) # Sat, 06 Nov 2021 21:37:21 -0700 (DOESN'T PRINT THIS WAY IN POSTMAN)
     return now
 
+def validate_id(id):
+    """Validates id for endpoint is an integer."""
+    try:
+        int(id)
+    except:
+        return abort(jsonify({"details": "Id must be an int."}), 400)
+
 @customers_bp.route("", methods=["GET"])
 def get_all_customer():
     """Retrieves all customers from database."""
@@ -31,10 +38,11 @@ def get_all_customer():
 @customers_bp.route("<customer_id>", methods=["GET"])
 def get_customer_by_id(customer_id):
     """Retreives customer data by id."""
-    # TODO: Refactor 404 for JSON
+    # TODO: Refactor out for customer_id endpoints
+    validate_id(customer_id)
     customer = Customer.query.get(customer_id)
     if not customer:
-        return jsonify({'message': 'Customer 1 was not found'}), 404
+        return jsonify({"message": f"Customer {customer_id} was not found"}), 404
 
     return jsonify(customer.to_dict())
 
@@ -48,7 +56,7 @@ def create_customer():
     mandatory_fields = ["name", "postal_code", "phone"]
     for field in mandatory_fields:
         if field not in response_body:
-            return jsonify(f"{field.capitalize()} missing. Unable to create cusomer account."), 400
+            return jsonify({"details": f"Request body must include {field}."}), 400
     
     new_customer = Customer(
         name=response_body["name"],
@@ -64,7 +72,10 @@ def create_customer():
 @customers_bp.route("<customer_id>", methods=["PUT"])
 def update_customer_by_id(customer_id):
     """Updates all customer data by id"""
-    customer = Customer.query.get_or_404(customer_id)
+    # TODO: Refactor out for customer_id endpoints
+    customer = Customer.query.get(customer_id)
+    if not customer:
+        return jsonify({"message": f"Customer {customer_id} was not found"}), 404
 
     response_body = request.get_json()
     #TODO: Refactor reused code below
@@ -72,8 +83,7 @@ def update_customer_by_id(customer_id):
     mandatory_fields = ["name", "postal_code", "phone"]
     for field in mandatory_fields:
         if field not in response_body:
-            return jsonify({"details": "Invalid data"}), 400
-            # return jsonify({"details": f"{field.capitalize()} missing. Unable to update cusomer account."}), 400
+            return jsonify({"details": f"Request body must include {field}."}), 400
 
     customer.update_from_response(response_body)
     db.session.commit()
@@ -83,7 +93,11 @@ def update_customer_by_id(customer_id):
 @customers_bp.route("<customer_id>", methods=["DELETE"])
 def delete_customer(customer_id):
     """Deletes customer account by id."""
-    customer = Customer.query.get_or_404(customer_id)
+    # TODO: Refactor out for customer_id endpoints
+    customer = Customer.query.get(customer_id)
+    if not customer:
+        return jsonify({"message": f"Customer {customer_id} was not found"}), 404
+
     db.session.delete(customer)
     db.session.commit()
 
