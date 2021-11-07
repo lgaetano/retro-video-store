@@ -69,11 +69,16 @@ def update_customer_by_id(customer_id):
         if field not in response_body:
             return jsonify(f"{field.capitalize()} missing. Unable to update cusomer account."), 400
 
-    # customer.name = response_body["name"]
-    # customer.postal_code = response_body["postal_code"]
-    # customer.phone = response_body["phone"]
-
     customer.update_from_response(response_body)
     db.session.commit()
 
     return jsonify(customer.to_dict()), 200
+
+@customers_bp.route("<customer_id>", methods=["DELETE"])
+def delete_customer(customer_id):
+    """Deletes customer account by id."""
+    customer = Customer.query.get_or_404(customer_id)
+    db.session.delete(customer)
+    db.session.commit()
+
+    return jsonify({"id": customer.id}), 200
