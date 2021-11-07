@@ -4,12 +4,10 @@ from app.models.rental import Rental
 from app.models.video import Video
 from flask import Blueprint, jsonify,request, make_response, abort 
 from datetime import date, datetime, timezone
+import re
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 
-
-# TODO ZIP CODE VALIDATION,
-#       PHONE NUM VALIDATION,
 def timestamp():
     """
     Determines current time and formats to specficiation.
@@ -28,6 +26,21 @@ def validate_id(id):
     except:
         return abort(jsonify({"details": "Id must be an int."}), 400)
 
+#TODO: SHOULD FLASK METHODS BE COMPLETELY EMPTY FROM MODELS??
+def validate_phone_number(phone_num):
+    """Uses regex to confirm phone data matches standard US phone number."""
+    basic_phone_num = re.compile("\(\d{3}\)\s\d{3}-\d{4}")
+    if re.fullmatch(basic_phone_num, phone_num):
+        return True
+    return False
+
+def validate_postal_code(postal_code):
+    """Uses regex to confirm zipcode data matches standard US zipcode."""
+    basic_zipcode = re.compile("\d{5}")
+    if re.fullmatch(basic_zipcode, postal_code):
+        return True
+    return False
+
 @customers_bp.route("", methods=["GET"])
 def get_all_customer():
     """Retrieves all customers from database."""
@@ -38,7 +51,7 @@ def get_all_customer():
 @customers_bp.route("<customer_id>", methods=["GET"])
 def get_customer_by_id(customer_id):
     """Retreives customer data by id."""
-    # TODO: Refactor out for customer_id endpoints
+    # TODO: ID VALIDATION DECORATOR
     validate_id(customer_id)
     customer = Customer.query.get(customer_id)
     if not customer:
@@ -50,14 +63,19 @@ def get_customer_by_id(customer_id):
 def create_customer():
     """Creates a customer from JSON user input."""
     response_body = request.get_json()
-
-    #TODO: Refactor reused code below
-    #TODO: Validate input
+    
+    #TODO: VALID INPUT DECORATOR FOR PUT/POST
     mandatory_fields = ["name", "postal_code", "phone"]
     for field in mandatory_fields:
         if field not in response_body:
             return jsonify({"details": f"Request body must include {field}."}), 400
-    
+        elif field == "postal_code":
+            if not validate_postal_code(response_body["postal_code"]):
+                return jsonify({"details": "Invalid format for postal_code."}), 400
+        elif field == "phone":
+            if not validate_phone_number(response_body["phone"]):
+                return jsonify({"details": "Invalid format for phone number."}), 400
+
     new_customer = Customer(
         name=response_body["name"],
         registered_at=timestamp(),
@@ -72,14 +90,13 @@ def create_customer():
 @customers_bp.route("<customer_id>", methods=["PUT"])
 def update_customer_by_id(customer_id):
     """Updates all customer data by id"""
-    # TODO: Refactor out for customer_id endpoints
+    # TODO: ID VALIDATION DECORATOR
     customer = Customer.query.get(customer_id)
     if not customer:
         return jsonify({"message": f"Customer {customer_id} was not found"}), 404
 
     response_body = request.get_json()
-    #TODO: Refactor reused code below
-    #TODO: Validate input
+    #TODO: VALID INPUT DECORATOR FOR PUT/POST
     mandatory_fields = ["name", "postal_code", "phone"]
     for field in mandatory_fields:
         if field not in response_body:
@@ -93,7 +110,7 @@ def update_customer_by_id(customer_id):
 @customers_bp.route("<customer_id>", methods=["DELETE"])
 def delete_customer(customer_id):
     """Deletes customer account by id."""
-    # TODO: Refactor out for customer_id endpoints
+    # TODO: ID VALIDATION DECORATOR
     customer = Customer.query.get(customer_id)
     if not customer:
         return jsonify({"message": f"Customer {customer_id} was not found"}), 404
