@@ -17,3 +17,9 @@ class Customer(db.Model):
             "postal_code": self.postal_code,
             "phone": self.phone
         }
+
+    def update_from_response(self, data):
+        for key, value in data.items():
+            # Restricts attribute additions to columns in table
+            if key in Customer.__table__.columns.keys():
+                setattr(self, key, value)
