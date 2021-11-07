@@ -14,10 +14,9 @@ def timestamp():
     """
     Determines current time and formats to specficiation.
     e.g. "Wed, 16 Apr 2014 21:40:20 -0700"""
-    now = date.today().strftime("%a, %d %b %Y %X %z")
-    # now = now.strftime("%a, %d %b %Y %X %z")
+    #TODO: fix datetime formatting
+    now = date.today().strftime("%a, %d %b %Y %H:%M:%S %Z")
     return now
-
 
 @customers_bp.route("", methods=["GET"])
 def get_all_customer():
@@ -38,6 +37,7 @@ def get_customer_by_id(customer_id):
 def create_customer():
     """Creates a customer from JSON user input."""
     response_body = request.get_json()
+    print(response_body)
 
     mandatory_fields = ["name", "postal_code", "phone"]
     for field in mandatory_fields:
@@ -45,11 +45,14 @@ def create_customer():
             return jsonify(f"{field} missing. Unable to create cusomer account."), 400
 
     new_customer = Customer(
-        name=response_body.name,
+        name=response_body["name"],
         registered_at=timestamp(),
-        postal_code=response_body.postal_code,
-        phone=response_body.phone
+        postal_code=response_body["postal_code"],
+        phone=response_body["phone"]
     )
+    db.session.add(new_customer)
+    db.session.commit()
+    return jsonify({"id": new_customer.id}), 201
 
 @customers_bp.route("<customer_id>", methods=["PUT"])
 def update_customer_by_id(customer_id):
