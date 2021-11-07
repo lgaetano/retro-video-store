@@ -59,7 +59,7 @@ def create_customer():
 @customers_bp.route("<customer_id>", methods=["PUT"])
 def update_customer_by_id(customer_id):
     """Updates all customer data by id"""
-    customer = Customer.get_or_404(customer_id)
+    customer = Customer.query.get_or_404(customer_id)
 
     response_body = request.get_json()
     #TODO: Refactor reused code below
@@ -75,5 +75,5 @@ def update_customer_by_id(customer_id):
 
     customer.update_from_response(response_body)
     db.session.commit()
-    
+
     return jsonify(customer.to_dict()), 200
