@@ -39,10 +39,12 @@ def create_customer():
     response_body = request.get_json()
     print(response_body)
 
+    #TODO: Refactor reused code below
+    #TODO: Validate input
     mandatory_fields = ["name", "postal_code", "phone"]
     for field in mandatory_fields:
         if field not in response_body:
-            return jsonify(f"{field} missing. Unable to create cusomer account."), 400
+            return jsonify(f"{field.capitalize()} missing. Unable to create cusomer account."), 400
 
     new_customer = Customer(
         name=response_body["name"],
@@ -57,4 +59,21 @@ def create_customer():
 @customers_bp.route("<customer_id>", methods=["PUT"])
 def update_customer_by_id(customer_id):
     """Updates all customer data by id"""
-    pass
+    customer = Customer.get_or_404(customer_id)
+
+    response_body = request.get_json()
+    #TODO: Refactor reused code below
+    #TODO: Validate input
+    mandatory_fields = ["name", "postal_code", "phone"]
+    for field in mandatory_fields:
+        if field not in response_body:
+            return jsonify(f"{field.capitalize()} missing. Unable to update cusomer account."), 400
+
+    # customer.name = response_body["name"]
+    # customer.postal_code = response_body["postal_code"]
+    # customer.phone = response_body["phone"]
+
+    customer.update_from_response(response_body)
+    db.session.commit()
+    
+    return jsonify(customer.to_dict()), 200
