@@ -8,25 +8,25 @@ import re
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 
+def validate_id(id, param_id):
+    """Validates id for endpoint is an integer."""
+    try:
+        int(id)
+    except:
+        # abort(jsonify({f"details": "{param_id} must be an int."}), 400) # TODO: Why didn't this work?
+        abort(make_response({f"details": "{param_id} must be an int."}, 400))
+
 def timestamp():
     """
     Determines current time and formats to specficiation.
     e.g. "Wed, 16 Apr 2014 21:40:20 -0700"""
     #TODO: fix datetime formatting
     #TODO: Should this go here? Customer method?
-    # now = datetime.now().strftime("%a, %d %b %Y %H:%M:%S %z")
     now = datetime.now(timezone.utc).astimezone().strftime("%a, %d %b %Y %H:%M:%S %z")
     print(now) # Sat, 06 Nov 2021 21:37:21 -0700 (DOESN'T PRINT THIS WAY IN POSTMAN)
     return now
 
-def validate_id(id):
-    """Validates id for endpoint is an integer."""
-    try:
-        int(id)
-    except:
-        return abort(jsonify({"details": "Id must be an int."}), 400)
-
-#TODO: SHOULD FLASK METHODS BE COMPLETELY EMPTY FROM MODELS??
+#TODO: SHOULD FLASK METHODS BE COMPLETELY SEPARATE FROM MODELS??
 def validate_phone_number(phone_num):
     """Uses regex to confirm phone data matches standard US phone number."""
     basic_phone_num = re.compile("(\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4}|\(\d{3}\)\s*\d{3}[-\.\s]??\d{4})")
@@ -52,7 +52,7 @@ def get_all_customer():
 def get_customer_by_id(customer_id):
     """Retreives customer data by id."""
     # TODO: ID VALIDATION DECORATOR
-    validate_id(customer_id)
+    validate_id(customer_id, "customer_id")
     customer = Customer.query.get(customer_id)
     if not customer:
         return jsonify({"message": f"Customer {customer_id} was not found"}), 404
