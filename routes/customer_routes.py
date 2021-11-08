@@ -29,7 +29,7 @@ def validate_id(id):
 #TODO: SHOULD FLASK METHODS BE COMPLETELY EMPTY FROM MODELS??
 def validate_phone_number(phone_num):
     """Uses regex to confirm phone data matches standard US phone number."""
-    basic_phone_num = re.compile("\(\d{3}\)\s\d{3}-\d{4}")
+    basic_phone_num = re.compile("(\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4}|\(\d{3}\)\s*\d{3}[-\.\s]??\d{4})")
     if re.fullmatch(basic_phone_num, phone_num):
         return True
     return False
