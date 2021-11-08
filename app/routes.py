@@ -45,3 +45,20 @@ def handle_video(video_id):
         video.release_date = request_body["release_date"]
         db.session.commit() 
         return jsonify(video.video_dict()),200
+    
+@videos_bp.route("",methods=["POST"])
+def create_video():
+    request_body = request.get_json()
+    video_keys = ["title","total_inventory","release_date"]
+    for key in video_keys:
+        if key not in request_body:
+            return jsonify({"details":f'Request body must include {key}.'}),400
+    new_video = Video(
+        title = request_body["title"],
+        total_inventory = request_body["total_inventory"],
+        release_date = request_body["release_date"]
+        )
+    db.session.add(new_video)
+    db.session.commit()
+    return jsonify(new_video.video_dict()),201      
+    
