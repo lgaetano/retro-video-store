@@ -18,6 +18,7 @@ class Rental(db.Model):
     #     pass
 
     def checkout_to_dict(self):
+        """Returns dictionary for rentals/check-out route."""
         return {
             "customer_id": self.customer.id,
             "video_id": self.video.id,
@@ -25,4 +26,13 @@ class Rental(db.Model):
             "videos_checked_out_count": Customer.videos_checked_out_count,
             "available_inventory": Video.total_inventory - Customer.videos_checked_out_count
         
+        }
+
+    def check_in_to_dict(self):
+        """Returns dictionary for rentals/check-in route."""
+        return {
+            "customer_id": self.customer_id,
+            "video_id": self.video_id,
+            "videos_checked_out_count": Customer.videos_checked_out_count,
+            "available_inventory": Video.total_inventory - Customer.videos_checked_out_count
         }
