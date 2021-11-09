@@ -59,6 +59,7 @@ def create_video():
 @videos_bp.route("/<video_id>", methods=["PUT"])
 def update_video(video_id):
     """Updates video from user data."""
+    validate_id(video_id)
     video = Video.query.get(video_id)
     if not video:
         return jsonify({"message": f"Customer {video_id} was not found"}), 404
@@ -78,6 +79,7 @@ def update_video(video_id):
 @videos_bp.route("/<video_id>", methods=["DELETE"])
 def delete_video(video_id):
     """Deletes video data by id."""
+    validate_id(video_id)
     video = Video.query.get(video_id)
     if not video:
         return jsonify({"message": f"Customer {video_id} was not found"}), 404
