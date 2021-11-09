@@ -12,7 +12,7 @@ class Video(db.Model):
             "id": self.id,
             "title": self.title,
             "release_date": self.release_date,
-            "total_inventory": self.inventory
+            "total_inventory": self.total_inventory
         }
 
     def updates_from_dict(self, data):

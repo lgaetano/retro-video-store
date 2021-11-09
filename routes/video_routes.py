@@ -34,7 +34,7 @@ def get_video_by_id(video_id):
 
     return jsonify(video.to_dict()), 200
 
-@videos_bp.route("", mehods=["POST"])
+@videos_bp.route("", methods=["POST"])
 def create_video():
     """Creates instance of customer from user input."""
     response_body = request.get_json()
