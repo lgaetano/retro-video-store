@@ -15,10 +15,20 @@ class Rental(db.Model):
         return due_date
 
     def checkout_to_dict(self):
+        """Returns dictionary for rentals/check-out route."""
         return {
             "customer_id": self.customer_id,
             "video_id": self.video_id,
             "due_date": self.calculate_due_date(),
+            "videos_checked_out_count": Customer.videos_checked_out_count,
+            "available_inventory": Video.total_inventory - Customer.videos_checked_out_count
+        }
+
+    def check_in_to_dict(self):
+        """Returns dictionary for rentals/check-in route."""
+        return {
+            "customer_id": self.customer_id,
+            "video_id": self.video_id,
             "videos_checked_out_count": Customer.videos_checked_out_count,
             "available_inventory": Video.total_inventory - Customer.videos_checked_out_count
         }
