@@ -22,6 +22,7 @@ class Rental(db.Model):
             "customer_id": self.customer.id,
             "video_id": self.video.id,
             "due_date": self.calculate_due_date(),
-            "videos_checked_out_count": 2,
-            "available_inventory": 5
+            "videos_checked_out_count": Customer.videos_checked_out_count,
+            "available_inventory": Video.total_inventory - Customer.videos_checked_out_count
+        
         }
