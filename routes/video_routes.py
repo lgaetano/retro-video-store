@@ -4,22 +4,86 @@ from app.models.rental import Rental
 from app.models.video import Video
 from flask import Blueprint, jsonify,request, make_response, abort 
 
-customers_bp = Blueprint("customers", __name__,url_prefix="/customers")
 rentals_bp = Blueprint("rentals",__name__,url_prefix="/rentals")
 videos_bp = Blueprint("videos",__name__,url_prefix="/videos")
 
+def validate_id(id):
+    """Validates id for endpoint is an integer."""
+    try:
+        int(id)
+    except:
+        # abort(jsonify({f"details": "{param_id} must be an int."}), 400) # TODO: Why didn't this work?
+        abort(make_response({f"details": "Endpoint must be an int."}, 400))
 
-@customers_bp.route("", methods=["GET"])
-def get_all_customer():
-    """Retrieves all customers from database."""
-    customers = Customer.query.all()
+@videos_bp.route("", methods=["GET"])
+def get_all_videos():
+    """Retrieves all videos from database."""
+    videos = Video.query.all()
 
-    return jsonify([customer.to_dict() for customer in customers]), 200
+    return jsonify([videos.to_dict() for video in videos]), 200
 
-@customers_bp.route("<customer_id>", methods=["GET"])
-def get_customer_by_id(customer_id):
-    """Retreives customer data by id."""
+@videos_bp.route("/<video_id>", methods=["GET"])
+def get_video_by_id(video_id):
+    """Retreives video data by id."""
+    validate_id(video_id)
     # TODO: Refactor 404 for JSON
-    customer = Customer.query.get_or_404(customer_id)
+    video = Video.query.get_or_404(video_id)
 
-    return jsonify(customer.to_dict())
+    if not video:
+        return jsonify({"message":f"Video {video_id} was not found"}), 404
+
+    return jsonify(video.to_dict()), 200
+
+@videos_bp.route("", mehods=["POST"])
+def create_video():
+    """Creates instance of customer from user input."""
+    response_body = request.get_json()
+
+    # TODO: Valid input decorator for PUT/POST
+    mandatory_fields = ["title", "release_date", "total_inventory"]
+    for field in mandatory_fields:
+        if field not in response_body:
+            return jsonify({"details": f"Request body must include {field}."}), 400
+        # TODO: Add regex validation for releast date and int verification for totla_inventory
+
+    new_video = Video(
+        title=response_body["title"],
+        total_inventory=response_body["total_inventory"],
+        release_date=response_body["release_date"]
+    )
+    db.session.add(new_video)
+    db.session.commit()
+
+    return jsonify({"id": new_video.id}), 201
+
+@videos_bp.route("/<video_id>", methods=["PUT"])
+def update_video(video_id):
+    """Updates video from user data."""
+    validate_id(video_id)
+    video = Video.query.get(video_id)
+    if not video:
+        return jsonify({"message": f"Customer {video_id} was not found"}), 404
+    
+    # TODO: Valid input decorator for PUT/POST
+    response_body = request.get_json()
+    mandatory_fields = ["title", "release_date", "total_inventory"]
+    for field in mandatory_fields:
+        if field not in response_body:
+            return jsonify({"details": f"Request body must include {field}."}), 400
+        # TODO: Add regex validation for releast date and int verification for totla_inventory
+
+    video.update_from_dict(response_body)
+    db.session.commit(video)
+    return jsonify(video.to_dict()), 200
+
+@videos_bp.route("/<video_id>", methods=["DELETE"])
+def delete_video(video_id):
+    """Deletes video data by id."""
+    validate_id(video_id)
+    video = Video.query.get(video_id)
+    if not video:
+        return jsonify({"message": f"Customer {video_id} was not found"}), 404
+    
+    db.session.delete(video)
+    db.session.commit()
+    return jsonify({"id": video.id}), 200

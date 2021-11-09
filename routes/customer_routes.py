@@ -8,13 +8,13 @@ import re
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 
-def validate_id(id, param_id):
+def validate_id(id):
     """Validates id for endpoint is an integer."""
     try:
         int(id)
     except:
         # abort(jsonify({f"details": "{param_id} must be an int."}), 400) # TODO: Why didn't this work?
-        abort(make_response({f"details": "{param_id} must be an int."}, 400))
+        abort(make_response({f"details": "Endpoint must be an int."}, 400))
 
 def timestamp():
     """
@@ -52,7 +52,7 @@ def get_all_customer():
 def get_customer_by_id(customer_id):
     """Retreives customer data by id."""
     # TODO: ID VALIDATION DECORATOR
-    validate_id(customer_id, "customer_id")
+    validate_id(customer_id)
     customer = Customer.query.get(customer_id)
     if not customer:
         return jsonify({"message": f"Customer {customer_id} was not found"}), 404
@@ -91,6 +91,7 @@ def create_customer():
 def update_customer_by_id(customer_id):
     """Updates all customer data by id"""
     # TODO: ID VALIDATION DECORATOR
+    validate_id(customer_id)
     customer = Customer.query.get(customer_id)
     if not customer:
         return jsonify({"message": f"Customer {customer_id} was not found"}), 404
@@ -111,6 +112,7 @@ def update_customer_by_id(customer_id):
 def delete_customer(customer_id):
     """Deletes customer account by id."""
     # TODO: ID VALIDATION DECORATOR
+    validate_id(customer_id)
     customer = Customer.query.get(customer_id)
     if not customer:
         return jsonify({"message": f"Customer {customer_id} was not found"}), 404
