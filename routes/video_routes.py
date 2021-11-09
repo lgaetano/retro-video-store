@@ -72,7 +72,16 @@ def update_video(video_id):
         # TODO: Add regex validation for releast date and int verification for totla_inventory
 
     video.update_from_dict(response_body)
+    db.session.commit(video)
     return jsonify(video.to_dict()), 200
 
-PUT /videos/<id>
-DELETE /videos/<id>
+@videos_bp.route("/<video_id>", methods=["DELETE"])
+def delete_video(video_id):
+    """Deletes video data by id."""
+    video = Video.query.get(video_id)
+    if not video:
+        return jsonify({"message": f"Customer {video_id} was not found"}), 404
+    
+    db.session.delete(video)
+    db.session.commit()
+    return jsonify({"id": video.id}), 200
