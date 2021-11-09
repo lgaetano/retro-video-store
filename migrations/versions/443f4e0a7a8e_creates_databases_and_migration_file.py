@@ -1,8 +1,8 @@
-"""Updates Customer model
+"""Creates databases and migration file
 
-Revision ID: d0c033fdb2dd
+Revision ID: 443f4e0a7a8e
 Revises: 
-Create Date: 2021-11-05 22:54:18.590651
+Create Date: 2021-11-09 03:45:59.321195
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'd0c033fdb2dd'
+revision = '443f4e0a7a8e'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -21,6 +21,7 @@ def upgrade():
     op.create_table('customer',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(), nullable=True),
+    sa.Column('registered_at', sa.String(), nullable=True),
     sa.Column('postal_code', sa.String(), nullable=True),
     sa.Column('phone', sa.String(), nullable=True),
     sa.PrimaryKeyConstraint('id')
