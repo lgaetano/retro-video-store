@@ -7,7 +7,7 @@ class Customer(db.Model):
     registered_at = db.Column(db.String)
     postal_code = db.Column(db.String)
     phone = db.Column(db.String)
-    # videos = db.Column(db.ForeignKey)
+    videos = db.relationship("Video", secondary="rentals", backref="videos")
     
     def to_dict(self):
         return {
