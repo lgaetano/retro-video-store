@@ -22,9 +22,9 @@ def get_all_videos():
 
     return jsonify([videos.to_dict() for video in videos]), 200
 
-@videos_bp.route("<video_id>", methods=["GET"])
+@videos_bp.route("/<video_id>", methods=["GET"])
 def get_video_by_id(video_id):
-    """Retreives customer data by id."""
+    """Retreives video data by id."""
     validate_id(video_id)
     # TODO: Refactor 404 for JSON
     video = Video.query.get_or_404(video_id)
@@ -34,6 +34,26 @@ def get_video_by_id(video_id):
 
     return jsonify(video.to_dict()), 200
 
+@videos_bp.route("", mehods=["POST"])
+def create_video():
+    """Creates instance of customer from user input."""
+    response_body = request.get_json()
+
+    mandatory_fields = ["title", "release_date", "total_inventory"]
+    for field in mandatory_fields:
+        if field not in response_body:
+            return jsonify({"details": f"Request body must include {field}."}), 400
+        # TODO: Add regex validation for releast date and int verification for totla_inventory
+
+    new_video = Video(
+        title=response_body["title"],
+        total_inventory=response_body["total_inventory"],
+        release_date=response_body["release_date"]
+    )
+    db.session.add(new_video)
+    db.session.commit()
+
+    return jsonify({"id": new_video.id}), 201
 
 POST /videos
 PUT /videos/<id>
