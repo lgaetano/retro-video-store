@@ -72,8 +72,8 @@ def update_video(video_id):
             return jsonify({"details": f"Request body must include {field}."}), 400
         # TODO: Add regex validation for releast date and int verification for totla_inventory
 
-    video.update_from_dict(response_body)
-    db.session.commit(video)
+    video.updates_from_dict(response_body)
+    db.session.commit()
     return jsonify(video.to_dict()), 200
 
 @videos_bp.route("/<video_id>", methods=["DELETE"])
