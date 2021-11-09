@@ -39,6 +39,7 @@ def create_video():
     """Creates instance of customer from user input."""
     response_body = request.get_json()
 
+    # TODO: Valid input decorator for PUT/POST
     mandatory_fields = ["title", "release_date", "total_inventory"]
     for field in mandatory_fields:
         if field not in response_body:
@@ -55,6 +56,23 @@ def create_video():
 
     return jsonify({"id": new_video.id}), 201
 
-POST /videos
+@videos_bp.route("/<video_id>", methods=["PUT"])
+def update_video(video_id):
+    """Updates video from user data."""
+    video = Video.query.get(video_id)
+    if not video:
+        return jsonify({"message": f"Customer {video_id} was not found"}), 404
+    
+    # TODO: Valid input decorator for PUT/POST
+    response_body = request.get_json()
+    mandatory_fields = ["title", "release_date", "total_inventory"]
+    for field in mandatory_fields:
+        if field not in response_body:
+            return jsonify({"details": f"Request body must include {field}."}), 400
+        # TODO: Add regex validation for releast date and int verification for totla_inventory
+
+    video.update_from_dict(response_body)
+    return jsonify(video.to_dict()), 200
+
 PUT /videos/<id>
 DELETE /videos/<id>
