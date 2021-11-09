@@ -5,3 +5,11 @@ class Video(db.Model):
     title = db.Column(db.String)
     total_inventory = db.Column(db.Integer)
     release_date = db.Column(db.DateTime)
+
+    def to_dict(self):
+        return{
+            "id": self.id,
+            "title": self.title,
+            "release_date": self.release_date,
+            "total_inventory": self.inventory
+        }
