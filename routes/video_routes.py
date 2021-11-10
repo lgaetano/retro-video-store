@@ -39,7 +39,7 @@ def create_video():
     response_body = request.get_json()
 
     # TODO: Valid input decorator for PUT/POST
-    mandatory_fields = ["title", "release_date", "total_inventory"]
+    mandatory_fields = ["title", "total_inventory", "release_date"]
     for field in mandatory_fields:
         if field not in response_body:
             return jsonify({"details": f"Request body must include {field}."}), 400
