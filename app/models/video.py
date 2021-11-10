@@ -9,7 +9,7 @@ class Video(db.Model):
 
     def to_dict(self):
         """Returns model attributes in dict form."""
-        return{
+        return {
             "id": self.id,
             "title": self.title,
             "release_date": self.release_date,
