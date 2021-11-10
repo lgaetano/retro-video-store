@@ -13,6 +13,15 @@ class Rental(db.Model):
         today = date.today()
         due_date = str(today + timedelta(days=7))
         return due_date
+    
+    def get_cout_checkedout_for_specific_video(self,video_id):
+        rentals = Rental.query.get(video_id)
+        return rentals.count(video_id)
+    
+    def get_available_inventory_for_specific_video(self,video_id):
+        video=Video.query.get(video_id)
+        return video.total_inventory - self.get_cout_checkedout_for_specific_video(video_id)
+        
 
     def checkout_to_dict(self):
         """Returns dictionary for rentals/check-out route."""
@@ -20,8 +29,10 @@ class Rental(db.Model):
             "customer_id": self.customer_id,
             "video_id": self.video_id,
             "due_date": self.calculate_due_date(),
-            "videos_checked_out_count": Customer.videos_checked_out_count,
-            "available_inventory": Video.total_inventory - Customer.videos_checked_out_count
+            # "videos_checked_out_count": Customer.videos_checked_out_count,
+            "videos_checked_out_count": self.get_cout_checkedout_for_specific_video(self.video_id),
+            # "available_inventory": Video.total_inventory - Customer.videos_checked_out_count
+            "available_inventory": self.get_available_inventory_for_specific_video(self.video_id)
         }
 
     def check_in_to_dict(self):
