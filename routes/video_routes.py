@@ -19,14 +19,14 @@ def get_all_videos():
     """Retrieves all videos from database."""
     videos = Video.query.all()
 
-    return jsonify([videos.to_dict() for video in videos]), 200
+    return jsonify([video.to_dict() for video in videos]), 200
 
 @videos_bp.route("/<video_id>", methods=["GET"])
 def get_video_by_id(video_id):
     """Retreives video data by id."""
     validate_id(video_id)
     # TODO: Refactor 404 for JSON
-    video = Video.query.get_or_404(video_id)
+    video = Video.query.get(video_id)
 
     if not video:
         return jsonify({"message":f"Video {video_id} was not found"}), 404
@@ -61,7 +61,7 @@ def update_video(video_id):
     validate_id(video_id)
     video = Video.query.get(video_id)
     if not video:
-        return jsonify({"message": f"Customer {video_id} was not found"}), 404
+        return jsonify({"message": f"Video {video_id} was not found"}), 404
     
     # TODO: Valid input decorator for PUT/POST
     response_body = request.get_json()
@@ -81,7 +81,7 @@ def delete_video(video_id):
     validate_id(video_id)
     video = Video.query.get(video_id)
     if not video:
-        return jsonify({"message": f"Customer {video_id} was not found"}), 404
+        return jsonify({"message": f"Video {video_id} was not found"}), 404
     
     db.session.delete(video)
     db.session.commit()
