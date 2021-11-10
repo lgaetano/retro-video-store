@@ -5,7 +5,8 @@ class Video(db.Model):
     title = db.Column(db.String)
     total_inventory = db.Column(db.Integer)
     release_date = db.Column(db.DateTime)
-    # available_inventory = db.Column(db.Integer)
+    available_inventory = db.Column(db.Integer)
+    
     
     def video_dict(self):
         

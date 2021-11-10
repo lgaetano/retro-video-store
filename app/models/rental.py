@@ -15,8 +15,8 @@ class Rental(db.Model):
         return due_date
     
     def get_cout_checkedout_for_specific_video(self,video_id):
-        rentals = Rental.query.get(video_id)
-        return rentals.count(video_id)
+        rentals = Rental.query.filter_by(video_id=video_id)
+        return rentals.count()
     
     def get_available_inventory_for_specific_video(self,video_id):
         video=Video.query.get(video_id)

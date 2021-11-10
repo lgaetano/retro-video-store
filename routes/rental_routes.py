@@ -6,9 +6,28 @@ from flask import Blueprint, jsonify,request, make_response, abort
 
 rentals_bp = Blueprint("rentals",__name__,url_prefix="/rentals")
 
-@rentals_bp.route("",methods=["POST"])
+@rentals_bp.route("/check-out",methods=["POST"])
 def checkout_video():
     request_body = request.get_json()
+    print(request_body)
+    mandatory_fields=["customer_id","video_id"]
+    for field in mandatory_fields:
+        if field not in request_body:
+            return jsonify({"details":f" Request body must include {field}"}),400
+    video= Video.query.get(request_body["video_id"])
+    customer = Customer.query.get(request_body["customer_id"])
+    
+    if not video:
+        return jsonify({"details":f"Video with id number {request_body['video_id']} was not found"}),404
+    elif not customer:
+        return jsonify({"details":f"Customer with id number {request_body['customer_id']} was not found"}),404
+    rental = Rental.query.get((video.id,customer.id))
+    if rental:
+        return jsonify({"message":"Could not perform checkout"}),400
+        
+        
+    # if video.available_inventory == 0:
+    #     return jsonify({"message":"Could not perform checkout"}),400
     new_rental= Rental(
         customer_id = request_body["customer_id"],
         video_id = request_body["video_id"]
