@@ -11,27 +11,6 @@ def validate_endpoint_id_is_int(id):
     except:
         abort(make_response({f"details": "Endpoint must be an int."}, 400))
 
-# def validate_user_input_customer(user_input):
-#     """
-#     Decorator to validate user input for customer endpoints.
-#     Returns JSON and 400 if bad data."""
-    
-#     """Uses regex to confirm phone data matches standard US phone number."""
-#     basic_phont_num = re.compile("/(\d{3}\)\s\d{3}-\d{4}")
-#     if re.fullmatch(basic_phont_num, phone_num):
-#         return True
-#     else:
-#         return False
-
-    
-#     """Uses regex to confirm zipcode data matches standard US zipcode."""
-#     basic_zipcode = re.compile("\d{5}")
-#     if re.fullmatch(basic_zipcode, zip_code):
-#         return True
-#     return False
-
-
-
 def validate_kwarg(endpoint):
     """
     Decorator to validate that a requested id of input data is and int 
