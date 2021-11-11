@@ -6,20 +6,21 @@ from flask import Blueprint, jsonify,request, make_response, abort
 
 rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
-def rentals_validate_input(data):
-    """
-    Function that validates presence of all mandatory fields, existence
-    of customer and video instances, and presence of rental."""
-    # Confirm all mandatory fields present
+def validate_request_body(form_data):
+    """Validates request body."""
     mandatory_fields = ["customer_id", "video_id"]
     for field in mandatory_fields:
-        if field not in data:
+        if field not in form_data:
             abort(make_response({"message": f"Request must include {field}."}, 400))
-    
-    # Confirm respective instances of Customer and Video exist
+
+def validate_customer_and_video_instances(data):
+    """
+    Function that validates existence of customer and video instances, 
+    returns rental object."""
     customer = Customer.query.get(data["customer_id"])
     if not customer:
         abort(make_response({"message": f"Could not locate customer {data['customer_id']}"}, 404))
+    
     video = Video.query.get(data["video_id"])
     if not video:
         abort(make_response({"message": f"Could not locate video {data['video_id']}"}, 404))
@@ -34,8 +35,9 @@ def rentals_validate_input(data):
 def check_out():
     """Checks out a video to a customer and updates the database."""
     form_data = request.get_json()
-    rental = rentals_validate_input(form_data)
-    
+    validate_request_body(form_data)
+
+    rental = validate_customer_and_video_instances(form_data)
     if rental: # exists
         return jsonify({"message": f"Could not perform checkout"}), 400
 
@@ -52,8 +54,9 @@ def check_out():
 def check_in():
     """Checks in a video from a customer and updates the database."""
     form_data = request.get_json()
+    validate_request_body(form_data)
 
-    rental = rentals_validate_input(form_data)
+    rental = validate_customer_and_video_instances(form_data)
     if not rental:
         return jsonify({"message": f"No outstanding rentals for customer {form_data['customer_id']} and video {form_data['video_id']}"}), 400
 
