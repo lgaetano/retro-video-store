@@ -86,3 +86,23 @@ def delete_video(video_id):
     db.session.delete(video)
     db.session.commit()
     return jsonify({"id": video.id}), 200
+
+@videos_bp.route("<videos_id>/rentals", methods=["GET"])
+def get_rentals_by_customer_id(videos_id):
+    """INSERT COMMENT"""
+    validate_endpoint_id(videos_id)
+    video = video_instance_validate(videos_id)
+
+    results = db.session.query(Rental, Video, Customer) \
+                        .select_from(Rental).join(Video).join(Customer).all()
+    
+    response = []
+    for rental, video, customer in results:
+        response.append({
+            "due_date": rental.due_date,
+            "name": customer.name,
+            "phone": customer.phone,
+            "postal_code": customer.postal_code
+    })
+        
+    return jsonify(response), 200
