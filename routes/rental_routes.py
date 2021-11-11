@@ -11,11 +11,13 @@ def checkout():
     """Checksout a video to a customer and updates the database."""
     response_body = request.get_json()
 
+    # Confirm all mandatory fields present
     mandatory_fields = ["customer_id", "video_id"]
     for field in mandatory_fields:
         if field not in response_body:
-            return jsonify({"details": f"Request body must include {field}."}), 400
+            return jsonify({"message": f"Request must include {field}."}), 400
     
+    # Confirm respective instances of Customer and Video exist
     customer = Customer.query.get(response_body["customer_id"])
     if not customer:
         return jsonify({"message": f"Could not locate customer {response_body['customer_id']}"}), 404
@@ -23,6 +25,11 @@ def checkout():
     if not video:
         return jsonify({"message": f"Could not locate video {response_body['video_id']}"}), 404
     
+    # Confirm rental does not already exist
+    rental = Rental.query.get((customer.id, video.id))
+    if rental: # exists
+        return jsonify({"message": f"Could not perform checkout"}), 400
+
     new_rental = Rental(
         customer_id=response_body["customer_id"],
         video_id=response_body["video_id"]
