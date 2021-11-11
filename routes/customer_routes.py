@@ -1,8 +1,8 @@
 from app import db
+from flask import Blueprint, jsonify,request, make_response, abort 
 from app.models.customer import Customer
 from app.models.rental import Rental
 from app.models.video import Video
-from flask import Blueprint, jsonify,request, make_response, abort 
 from datetime import date, datetime, timezone
 import re
 
@@ -41,6 +41,15 @@ def validate_postal_code(postal_code):
         return True
     return False
 
+def validate_customer_instance(customer_id):
+    """Confirms instances of customer exists."""
+    customer = Customer.query.get(customer_id)
+    
+    if not customer:
+        abort(make_response({"message" :f"Customer {customer_id} was not found"}, 404))
+
+    return customer
+
 @customers_bp.route("", methods=["GET"])
 def get_all_customer():
     """Retrieves all customers from database."""
@@ -53,9 +62,8 @@ def get_customer_by_id(customer_id):
     """Retreives customer data by id."""
     # TODO: ID VALIDATION DECORATOR
     validate_id(customer_id, "customer_id")
-    customer = Customer.query.get(customer_id)
-    if not customer:
-        return jsonify({"message": f"Customer {customer_id} was not found"}), 404
+
+    customer = validate_customer_instance(customer_id)
 
     return jsonify(customer.to_dict())
 
@@ -91,9 +99,7 @@ def create_customer():
 def update_customer_by_id(customer_id):
     """Updates all customer data by id"""
     # TODO: ID VALIDATION DECORATOR
-    customer = Customer.query.get(customer_id)
-    if not customer:
-        return jsonify({"message": f"Customer {customer_id} was not found"}), 404
+    customer = validate_customer_instance(customer_id)
 
     response_body = request.get_json()
     #TODO: VALID INPUT DECORATOR FOR PUT/POST
@@ -111,11 +117,27 @@ def update_customer_by_id(customer_id):
 def delete_customer(customer_id):
     """Deletes customer account by id."""
     # TODO: ID VALIDATION DECORATOR
-    customer = Customer.query.get(customer_id)
-    if not customer:
-        return jsonify({"message": f"Customer {customer_id} was not found"}), 404
-
+    customer = validate_customer_instance(customer_id)
     db.session.delete(customer)
     db.session.commit()
 
     return jsonify({"id": customer.id}), 200
+
+
+@customers_bp.route("<customer_id>/rentals", methods=["GET"])
+def get_rentals_by_customer_id(customer_id):
+    validate_id(customer_id, "customer_id")
+    validate_customer_instance(customer_id)
+
+    results = db.session.query(Rental, Customer, Video) \
+                        .select_from(Rental).join(Customer).join(Video).all()
+    
+    response = []
+    for rental, customer, video in results:
+        response.append({
+            "release_date": video.release_date,
+            "title": video.title,
+            "due_date": rental.due_date,
+    })
+        
+    return jsonify(response), 200
