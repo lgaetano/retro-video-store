@@ -13,10 +13,7 @@ class Rental(db.Model):
         today = date.today()
         due_date = str(today + timedelta(days=7))
         return due_date
-    
-    # def calculate_available_(self):
-    #     pass
-
+        
     def get_checked_out_count_for_specific_video(self, video_id):
         rentals = Rental.query.filter_by(video_id=video_id)
         return rentals.count()
@@ -40,6 +37,6 @@ class Rental(db.Model):
         return {
             "customer_id": self.customer_id,
             "video_id": self.video_id,
-            "videos_checked_out_count": Customer.videos_checked_out_count,
-            "available_inventory": Video.total_inventory - Customer.videos_checked_out_count
+            "videos_checked_out_count": self.get_checked_out_count_for_specific_video(self.video_id),
+            "available_inventory": self.get_avail_inventory_for_specific_video(self.video_id)
         }
