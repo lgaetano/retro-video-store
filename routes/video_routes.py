@@ -61,3 +61,27 @@ def validate_request_body(request_body):
     for key in video_keys:
         if key not in request_body:
             abort(make_response({"details":f'Request body must include {key}.'},400))
+
+@videos_bp.route("<video_id>/rentals", methods=["GET"])
+def get_rentals_by_video_id(video_id):
+    """Retrieves all rentals associated with a specific video."""
+    valid_int(video_id, "video_id")
+    video = Video.query.get(video_id)
+
+    # try_join = db.session.query(Video, Rental, Customer) \
+                        # .join(Video, Video.id == Rental.video_id) \
+                        # .join(Rental, Rental.customer_id == Customer.id)
+
+
+
+    # try_join = User.query.join(User.spaces).filter(User.username=='Bob', Space.name=='Mainspace').first()
+    # try_join = Video.query.join(User.spaces).filter(Video.id==video_id, Space.name=='Mainspace').first()
+
+
+
+    # {                                                 #video.id
+    #     "due_date": "Thu, 13 May 2021 21:36:38 GMT",  #rental.due_date
+    #     "name": "Edith Wong",                         #customer.name
+    #     "phone": "(555) 555-5555",                    #customer.phone
+    #     "postal_code": "99999",                       #customer.postal_code
+    # }
