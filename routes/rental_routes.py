@@ -14,17 +14,14 @@ def rentals_validate_input(data):
     mandatory_fields = ["customer_id", "video_id"]
     for field in mandatory_fields:
         if field not in data:
-            # return jsonify({"message": f"Request must include {field}."}), 400
             abort(make_response({"message": f"Request must include {field}."}, 400))
     
     # Confirm respective instances of Customer and Video exist
     customer = Customer.query.get(data["customer_id"])
     if not customer:
-        # return jsonify({"message": f"Could not locate customer {response_body['customer_id']}"}), 404
         abort(make_response({"message": f"Could not locate customer {data['customer_id']}"}, 404))
     video = Video.query.get(data["video_id"])
     if not video:
-        # return jsonify({"message": f"Could not locate video {response_body['video_id']}"}), 404
         abort(make_response({"message": f"Could not locate video {data['video_id']}"}, 404))
     
     # Confirm rental does not already exist
@@ -36,15 +33,15 @@ def rentals_validate_input(data):
 @rentals_bp.route("/check-out", methods=["POST"])
 def check_out():
     """Checks out a video to a customer and updates the database."""
-    response_body = request.get_json()
-    rental = rentals_validate_input(response_body)
+    form_data = request.get_json()
+    rental = rentals_validate_input(form_data)
     
     if rental: # exists
         return jsonify({"message": f"Could not perform checkout"}), 400
 
     new_rental = Rental(
-        customer_id=response_body["customer_id"],
-        video_id=response_body["video_id"]
+        customer_id=form_data["customer_id"],
+        video_id=form_data["video_id"]
     )
     db.session.add(new_rental)
     db.session.commit()
@@ -54,10 +51,13 @@ def check_out():
 @rentals_bp.route("/check-in", methods=["POST"])
 def check_in():
     """Checks in a video from a customer and updates the database."""
-    response_body = request.get_json()
+    form_data = request.get_json()
 
-    rental = rentals_validate_input(response_body)
+    rental = rentals_validate_input(form_data)
     if not rental:
-        return jsonify({"message": f"No outstanding rentals for customer {response_body['customer_id']} and video {response_body['video_id']}"}), 400
+        return jsonify({"message": f"No outstanding rentals for customer {form_data['customer_id']} and video {form_data['video_id']}"}), 400
 
+    # Remove rental from database
+    db.session.delete(rental)
+    db.session.commit()
     return jsonify(rental.check_in_to_dict()), 200
