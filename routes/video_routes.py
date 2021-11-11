@@ -36,10 +36,7 @@ def handle_video(video_id):
         return jsonify(video.video_dict()),200
     elif request.method == "PUT":
         request_body = request.get_json()
-        video_keys = ["title","total_inventory","release_date"]
-        for key in video_keys:
-            if key not in request_body:
-                return jsonify({"message":"Invalid data"}),400
+        validate_request_body(request_body)
         video.title = request_body["title"]
         video.total_inventory = request_body["total_inventory"]
         video.release_date = request_body["release_date"]
@@ -49,10 +46,7 @@ def handle_video(video_id):
 @videos_bp.route("",methods=["POST"])
 def create_video():
     request_body = request.get_json()
-    video_keys = ["title","total_inventory","release_date"]
-    for key in video_keys:
-        if key not in request_body:
-            return jsonify({"details":f'Request body must include {key}.'}),400
+    validate_request_body(request_body)
     new_video = Video(
         title = request_body["title"],
         total_inventory = request_body["total_inventory"],
@@ -62,3 +56,8 @@ def create_video():
     db.session.commit()
     return jsonify(new_video.video_dict()),201      
     
+def validate_request_body(request_body):
+    video_keys = ["title","total_inventory","release_date"]
+    for key in video_keys:
+        if key not in request_body:
+            abort(make_response({"details":f'Request body must include {key}.'},400))

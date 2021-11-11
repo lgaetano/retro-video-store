@@ -6,10 +6,11 @@ from flask import Blueprint, jsonify,request, make_response, abort
 
 rentals_bp = Blueprint("rentals",__name__,url_prefix="/rentals")
 
+
+
 @rentals_bp.route("/check-out",methods=["POST"])
 def checkout_video():
     request_body = request.get_json()
-    print(request_body)
     mandatory_fields=["customer_id","video_id"]
     for field in mandatory_fields:
         if field not in request_body:
@@ -35,3 +36,30 @@ def checkout_video():
     db.session.add(new_rental)
     db.session.commit()
     return jsonify(new_rental.checkout_to_dict()),200
+
+@rentals_bp.route("/check-in",methods=["POST"])
+def check_in_video():
+    request_body = request.get_json()
+    mandatory_fields=["customer_id","video_id"]
+    for field in mandatory_fields:
+        if field not in request_body:
+            return jsonify({"details":f" Request body must include {field}"}),400
+    video= Video.query.get(request_body["video_id"])
+    customer = Customer.query.get(request_body["customer_id"])
+    
+    if not video:
+        return jsonify({"details":f"Video with id number {request_body['video_id']} was not found"}),404
+    elif not customer:
+        return jsonify({"details":f"Customer with id number {request_body['customer_id']} was not found"}),404
+    rental = Rental.query.get((request_body["video_id"],request_body["customer_id"]))
+    # rental = Rental.query.get(video.id,customer.id)
+    print(rental)
+    if not rental:
+        return jsonify({"message":f"No outstanding rentals for customer {request_body['customer_id']} and video {request_body['video_id']}"}),400
+    checked_in_video =Rental(
+        video_id=request_body["video_id"],
+        customer_id=request_body["customer_id"]
+    )  
+    # db.session.delete(checked_in_video)
+    # db.session.commit() 
+    return jsonify(checked_in_video.check_in_to_dict()),200

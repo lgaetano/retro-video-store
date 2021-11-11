@@ -40,6 +40,6 @@ class Rental(db.Model):
         return {
             "customer_id": self.customer_id,
             "video_id": self.video_id,
-            "videos_checked_out_count": Customer.videos_checked_out_count,
-            "available_inventory": Video.total_inventory - Customer.videos_checked_out_count
+            "videos_checked_out_count": self.get_cout_checkedout_for_specific_video(self.video_id) - 1,
+            "available_inventory": self.get_available_inventory_for_specific_video(self.video_id) + 1
         }
