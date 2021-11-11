@@ -8,12 +8,11 @@ import re
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 
-def validate_id(id):
+def validate_endpoint_id(id):
     """Validates id for endpoint is an integer."""
     try:
         int(id)
     except:
-        # abort(jsonify({f"details": "{param_id} must be an int."}), 400) # TODO: Why didn't this work?
         abort(make_response({f"details": "Endpoint must be an int."}, 400))
 
 def timestamp():
@@ -41,22 +40,27 @@ def validate_postal_code(postal_code):
         return True
     return False
 
+def customer_instance_validate(id):
+    """
+    Function that validates that enpoint is an int, presence of all mandatory 
+    fields in input data, existence of customer instance."""
+    # Validates customer instance exists
+    customer = Customer.query.get(id)
+    if not customer:
+        abort(make_response({"message": f"Customer {id} was not found"}, 404))
+    return customer
+
 @customers_bp.route("", methods=["GET"])
 def get_all_customer():
     """Retrieves all customers from database."""
     customers = Customer.query.all()
-
     return jsonify([customer.to_dict() for customer in customers]), 200
 
 @customers_bp.route("<customer_id>", methods=["GET"])
 def get_customer_by_id(customer_id):
     """Retreives customer data by id."""
-    # TODO: ID VALIDATION DECORATOR
-    validate_id(customer_id)
-    customer = Customer.query.get(customer_id)
-    if not customer:
-        return jsonify({"message": f"Customer {customer_id} was not found"}), 404
-
+    validate_endpoint_id(customer_id)
+    customer = customer_instance_validate(customer_id)
     return jsonify(customer.to_dict())
 
 @customers_bp.route("", methods=["POST"])
@@ -82,19 +86,16 @@ def create_customer():
         postal_code=response_body["postal_code"],
         phone=response_body["phone"]
     )
-
     db.session.add(new_customer)
     db.session.commit()
+    
     return jsonify({"id": new_customer.id}), 201
 
 @customers_bp.route("<customer_id>", methods=["PUT"])
 def update_customer_by_id(customer_id):
     """Updates all customer data by id"""
-    # TODO: ID VALIDATION DECORATOR
-    validate_id(customer_id)
-    customer = Customer.query.get(customer_id)
-    if not customer:
-        return jsonify({"message": f"Customer {customer_id} was not found"}), 404
+    validate_endpoint_id(customer_id)
+    customer = customer_instance_validate(customer_id)
 
     response_body = request.get_json()
     #TODO: VALID INPUT DECORATOR FOR PUT/POST
@@ -111,11 +112,8 @@ def update_customer_by_id(customer_id):
 @customers_bp.route("<customer_id>", methods=["DELETE"])
 def delete_customer(customer_id):
     """Deletes customer account by id."""
-    # TODO: ID VALIDATION DECORATOR
-    validate_id(customer_id)
-    customer = Customer.query.get(customer_id)
-    if not customer:
-        return jsonify({"message": f"Customer {customer_id} was not found"}), 404
+    validate_endpoint_id(customer_id)
+    customer = customer_instance_validate(customer_id)
 
     db.session.delete(customer)
     db.session.commit()
