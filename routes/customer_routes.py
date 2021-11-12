@@ -5,6 +5,7 @@ from app.models.customer import Customer
 from app.models.rental import Rental
 from app.models.video import Video
 import utils.customer_validations as val
+from utils.customer_validations import validate_form_data
 from datetime import date, datetime, timezone
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
@@ -14,7 +15,7 @@ def validate_endpoint_id(id, param_id):
     try:
         int(id)
     except:
-        abort(make_response({f"details": "{param_id} must be an int."}, 400))
+        abort(make_response({f"details": f"{param_id} must be an int."}, 400))
 
 def timestamp():
     """
@@ -34,6 +35,10 @@ def query_params():
 
     if sort == "name":
         query = query.order_by(func.lower(Customer.name))
+    elif sort == "registered_at":
+        query = query.order_by(Customer.registered_at)
+    elif sort == "postal_code":
+        query = query.order_by(Customer.postal_code)
 
     if n and p:
         query = query.paginate(page=int(p), per_page=int(n))
@@ -42,23 +47,24 @@ def query_params():
     elif n:
         query = query.paginate(per_page=int(n))
     else:
-        query = query.all() # Final query
+        query = query.all() # Final query, not paginated
+        return query, False
 
-    return query
+    # Final query, paginated
+    return query, True
 
-#WHY DID I HHAVE TO DO val.validate_customer_instance(customer_id)... TO IMPORT THIS!?
+#WHY DID I HAVE TO DO val.validate_customer_instance(customer_id)... TO IMPORT THIS!?
 # DIDN"T WORK AS from ... impor validate_cust...
 
 @customers_bp.route("", methods=["GET"])
 def get_all_customer():
     """Retrieves all customers from database."""
-    query = query_params()
+    query, paginated = query_params()
+    if paginated:
+        # If query is Pagination obj, requires .items
+        return jsonify([customer.to_dict() for customer in query.items]), 200
+    return jsonify([customer.to_dict() for customer in query]), 200
 
-    if isinstance(query, list):
-        return jsonify([customer.to_dict() for customer in query]), 200
-
-    # If query is Pagination obj, requires .items
-    return jsonify([customer.to_dict() for customer in query.items]), 200
 
 @customers_bp.route("<customer_id>", methods=["GET"])
 def get_customer_by_id(customer_id):
@@ -71,7 +77,7 @@ def get_customer_by_id(customer_id):
 def create_customer():
     """Creates a customer from JSON user input."""
     response_body = request.get_json()
-    val.validate_form_data(response_body)
+    validate_form_data(response_body)
 
     if not val.validate_postal_code(response_body["postal_code"]):
         return jsonify({"details": "Invalid format for postal_code."}), 400
