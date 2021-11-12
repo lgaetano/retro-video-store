@@ -22,7 +22,7 @@ def timestamp():
     Determines current time and formats to specficiation.
     e.g. "Wed, 16 Apr 2014 21:40:20 -0700"""
     #TODO: fix datetime formatting
-    now = datetime.now(timezone.utc).astimezone().strftime("%a, %d %b %Y %H:%M:%S %z")
+    now = datetime.now(timezone.utc).astimezone() #.strftime("%a, %d %b %Y %H:%M:%S %z")
     print(now) # Sat, 06 Nov 2021 21:37:21 -0700 (DOESN'T PRINT THIS WAY IN POSTMAN)
     return now
 
@@ -36,7 +36,7 @@ def query_params():
     if sort == "name":
         query = query.order_by(func.lower(Customer.name))
     elif sort == "registered_at":
-        query = query.order_by(Customer.registered_at)
+        query = query.order_by(Customer.registered_at.desc())
     elif sort == "postal_code":
         query = query.order_by(Customer.postal_code)
 
