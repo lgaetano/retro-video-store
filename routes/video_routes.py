@@ -13,7 +13,7 @@ def validate_endpoint_id(id):
     except:
         abort(make_response({f"details": "Endpoint must be an int."}, 400))
     
-def video_instance_validate(id):
+def validate_video_instance(id):
     """
     Function that validates the existence of video instance."""
     # Validates video instance exists
@@ -21,6 +21,12 @@ def video_instance_validate(id):
     if not video:
         abort(make_response({"message": f"Video {id} was not found"}, 404))
     return video
+
+def validate_form_data(form_data):
+    mandatory_fields = ["title", "release_date", "total_inventory"]
+    for field in mandatory_fields:
+        if field not in form_data:
+            abort(make_response({"details": f"Request body must include {field}."}, 400))
 
 @videos_bp.route("", methods=["GET"])
 def get_all_videos():
@@ -33,20 +39,15 @@ def get_all_videos():
 def get_video_by_id(video_id):
     """Retreives video data by id."""
     validate_endpoint_id(video_id)
-    video = video_instance_validate(video_id)
+    video = validate_video_instance(video_id)
     return jsonify(video.to_dict()), 200
 
 @videos_bp.route("", methods=["POST"])
 def create_video():
     """Creates instance of customer from user input."""
     form_data = request.get_json()
-
-    # TODO: Valid input decorator for PUT/POST
-    mandatory_fields = ["title", "release_date", "total_inventory"]
-    for field in mandatory_fields:
-        if field not in form_data:
-            return jsonify({"details": f"Request body must include {field}."}), 400
-        # TODO: Add regex validation for releast date and int verification for totla_inventory
+    validate_form_data(form_data)
+    # TODO: Add regex validation for releast date and int verification for totla_inventory
 
     new_video = Video(
         title=form_data["title"],
@@ -56,23 +57,18 @@ def create_video():
     db.session.add(new_video)
     db.session.commit()
     
-    return jsonify({"id": new_video.id}), 201
+    return jsonify(new_video.to_dict()), 201
 
 @videos_bp.route("/<video_id>", methods=["PUT"])
 def update_video(video_id):
     """Updates video from user data."""
     validate_endpoint_id(video_id)
-    # TODO: Valid input decorator for PUT/POST
+
     form_data = request.get_json()
-
-    mandatory_fields = ["title", "release_date", "total_inventory"]
-    for field in mandatory_fields:
-        if field not in form_data:
-            return jsonify({"details": f"Request body must include {field}."}), 400
-        # TODO: Add regex validation for releast date and int verification for totla_inventory
+    validate_form_data(form_data)
+    # TODO: Add regex validation for releast date and int verification for totla_inventory
         
-    video = video_instance_validate(video_id)
-
+    video = validate_video_instance(video_id)
     video.updates_from_dict(form_data)
     db.session.commit()
     return jsonify(video.to_dict()), 200
@@ -81,7 +77,7 @@ def update_video(video_id):
 def delete_video(video_id):
     """Deletes video data by id."""
     validate_endpoint_id(video_id)
-    video = video_instance_validate(video_id)
+    video = validate_video_instance(video_id)
     
     db.session.delete(video)
     db.session.commit()
@@ -89,9 +85,9 @@ def delete_video(video_id):
 
 @videos_bp.route("<videos_id>/rentals", methods=["GET"])
 def get_rentals_by_customer_id(videos_id):
-    """INSERT COMMENT"""
+    """Retrieves all rentals associated with specific customer."""
     validate_endpoint_id(videos_id)
-    video = video_instance_validate(videos_id)
+    validate_video_instance(videos_id)
 
     results = db.session.query(Rental, Video, Customer) \
                         .select_from(Rental).join(Video).join(Customer).all()
