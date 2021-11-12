@@ -1,5 +1,6 @@
 from app import db
-from flask import Blueprint, jsonify,request, make_response, abort 
+from flask import Blueprint, jsonify,request, make_response, abort
+from sqlalchemy import func
 from app.models.customer import Customer
 from app.models.rental import Rental
 from app.models.video import Video
@@ -24,21 +25,15 @@ def timestamp():
     print(now) # Sat, 06 Nov 2021 21:37:21 -0700 (DOESN'T PRINT THIS WAY IN POSTMAN)
     return now
 
-#WHY DID I HHAVE TO DO val.validate_customer_instance(customer_id)... TO IMPORT THIS!?
-# DIDN"T WORK AS from ... impor validate_cust...
-
-@customers_bp.route("", methods=["GET"])
-def get_all_customer():
-    """Retrieves all customers from database."""
-    query = Customer.query # Base query
-
+def query_params():
+    query = Customer.query
     # Accepted query params
     sort = request.args.get("sort")
     n = request.args.get("n")
     p = request.args.get("p")
 
     if sort == "name":
-        query = query.order_by(Customer.name)
+        query = query.order_by(func.lower(Customer.name))
 
     if n and p:
         query = query.paginate(page=int(p), per_page=int(n))
@@ -49,6 +44,20 @@ def get_all_customer():
     else:
         query = query.all() # Final query
 
+    return query
+
+#WHY DID I HHAVE TO DO val.validate_customer_instance(customer_id)... TO IMPORT THIS!?
+# DIDN"T WORK AS from ... impor validate_cust...
+
+@customers_bp.route("", methods=["GET"])
+def get_all_customer():
+    """Retrieves all customers from database."""
+    query = query_params()
+
+    if isinstance(query, list):
+        return jsonify([customer.to_dict() for customer in query]), 200
+
+    # If query is Pagination obj, requires .items
     return jsonify([customer.to_dict() for customer in query.items]), 200
 
 @customers_bp.route("<customer_id>", methods=["GET"])
