@@ -41,7 +41,7 @@ def validate_postal_code(postal_code):
         return True
     return False
 
-def customer_instance_validate(id):
+def validate_customer_instance(id):
     """
     Function that validates the existence of customer instance, and
     returns instance of customer."""
@@ -57,12 +57,7 @@ def validate_form_data(form_data):
     for field in mandatory_fields:
         if field not in form_data:
             abort(make_response({"details": f"Request body must include {field}."}, 400))
-        elif field == "postal_code":
-            if not validate_postal_code(form_data["postal_code"]):
-                abort(make_response({"details": "Invalid format for postal_code."}, 400))
-        elif field == "phone":
-            if not validate_phone_number(form_data["phone"]):
-                abort(make_response({"details": "Invalid format for phone number."}, 400))
+    return True
 
 @customers_bp.route("", methods=["GET"])
 def get_all_customer():
@@ -75,7 +70,7 @@ def get_all_customer():
 def get_customer_by_id(customer_id):
     """Retreives customer data by id."""
     validate_endpoint_id(customer_id)
-    customer = customer_instance_validate(customer_id)
+    customer = validate_customer_instance(customer_id)
     return jsonify(customer.to_dict())
 
 @customers_bp.route("", methods=["POST"])
@@ -83,6 +78,11 @@ def create_customer():
     """Creates a customer from JSON user input."""
     form_data = request.get_json()
     validate_form_data(form_data)
+
+    if not validate_postal_code(form_data["postal_code"]):
+        return jsonify({"details": "Invalid format for postal_code."}), 400
+    if not validate_phone_number(form_data["phone"]):
+        return jsonify({"details": "Invalid format for phone number."}), 400
 
     new_customer = Customer(
         name=form_data["name"],
@@ -98,8 +98,7 @@ def create_customer():
 @customers_bp.route("<customer_id>", methods=["PUT"])
 def update_customer_by_id(customer_id):
     """Updates all customer data by id"""
-    validate_endpoint_id(customer_id)
-    customer = customer_instance_validate(customer_id)
+    customer = validate_customer_instance(customer_id)
 
     form_data = request.get_json()
     validate_form_data(form_data)
@@ -112,7 +111,7 @@ def update_customer_by_id(customer_id):
 def delete_customer(customer_id):
     """Deletes customer account by id."""
     validate_endpoint_id(customer_id)
-    customer = customer_instance_validate(customer_id)
+    customer = validate_customer_instance(customer_id)
 
     db.session.delete(customer)
     db.session.commit()
@@ -121,9 +120,9 @@ def delete_customer(customer_id):
 
 @customers_bp.route("<customer_id>/rentals", methods=["GET"])
 def get_rentals_by_customer_id(customer_id):
-    """INSERT COMMENT"""
+    """Retrieves all rentals associated with specific customer."""
     validate_endpoint_id(customer_id)
-    customer = customer_instance_validate(customer_id)
+    validate_customer_instance(customer_id)
 
     results = db.session.query(Rental, Customer, Video) \
                         .select_from(Rental).join(Customer).join(Video).all()
