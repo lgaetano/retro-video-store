@@ -8,12 +8,11 @@ import re
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 
-def validate_id(id, param_id):
+def validate_endpoint_id(id, param_id):
     """Validates id for endpoint is an integer."""
     try:
         int(id)
     except:
-        # abort(jsonify({f"details": "{param_id} must be an int."}), 400) # TODO: Why didn't this work?
         abort(make_response({f"details": "{param_id} must be an int."}, 400))
 
 def timestamp():
@@ -44,45 +43,41 @@ def validate_postal_code(postal_code):
 def validate_customer_instance(customer_id):
     """Confirms instances of customer exists."""
     customer = Customer.query.get(customer_id)
-    
     if not customer:
         abort(make_response({"message" :f"Customer {customer_id} was not found"}, 404))
-
     return customer
+
+def validate_form_data(response_body):
+    """Validates request body."""
+    mandatory_fields = ["name", "postal_code", "phone"]
+    for field in mandatory_fields:
+        if field not in response_body:
+            abort(make_response({"details": f"Request body must include {field}."}, 400))
+    return True
 
 @customers_bp.route("", methods=["GET"])
 def get_all_customer():
     """Retrieves all customers from database."""
     customers = Customer.query.all()
-
     return jsonify([customer.to_dict() for customer in customers]), 200
 
 @customers_bp.route("<customer_id>", methods=["GET"])
 def get_customer_by_id(customer_id):
     """Retreives customer data by id."""
-    # TODO: ID VALIDATION DECORATOR
-    validate_id(customer_id, "customer_id")
-
+    validate_endpoint_id(customer_id, "customer_id")
     customer = validate_customer_instance(customer_id)
-
     return jsonify(customer.to_dict())
 
 @customers_bp.route("", methods=["POST"])
 def create_customer():
     """Creates a customer from JSON user input."""
     response_body = request.get_json()
-    
-    #TODO: VALID INPUT DECORATOR FOR PUT/POST
-    mandatory_fields = ["name", "postal_code", "phone"]
-    for field in mandatory_fields:
-        if field not in response_body:
-            return jsonify({"details": f"Request body must include {field}."}), 400
-        elif field == "postal_code":
-            if not validate_postal_code(response_body["postal_code"]):
-                return jsonify({"details": "Invalid format for postal_code."}), 400
-        elif field == "phone":
-            if not validate_phone_number(response_body["phone"]):
-                return jsonify({"details": "Invalid format for phone number."}), 400
+    validate_form_data(response_body)
+
+    if not validate_postal_code(response_body["postal_code"]):
+        return jsonify({"details": "Invalid format for postal_code."}), 400
+    if not validate_phone_number(response_body["phone"]):
+        return jsonify({"details": "Invalid format for phone number."}), 400
 
     new_customer = Customer(
         name=response_body["name"],
@@ -98,15 +93,10 @@ def create_customer():
 @customers_bp.route("<customer_id>", methods=["PUT"])
 def update_customer_by_id(customer_id):
     """Updates all customer data by id"""
-    # TODO: ID VALIDATION DECORATOR
     customer = validate_customer_instance(customer_id)
 
     response_body = request.get_json()
-    #TODO: VALID INPUT DECORATOR FOR PUT/POST
-    mandatory_fields = ["name", "postal_code", "phone"]
-    for field in mandatory_fields:
-        if field not in response_body:
-            return jsonify({"details": f"Request body must include {field}."}), 400
+    validate_form_data(response_body)
 
     customer.update_from_response(response_body)
     db.session.commit()
@@ -116,7 +106,6 @@ def update_customer_by_id(customer_id):
 @customers_bp.route("<customer_id>", methods=["DELETE"])
 def delete_customer(customer_id):
     """Deletes customer account by id."""
-    # TODO: ID VALIDATION DECORATOR
     customer = validate_customer_instance(customer_id)
     db.session.delete(customer)
     db.session.commit()
@@ -126,7 +115,7 @@ def delete_customer(customer_id):
 
 @customers_bp.route("<customer_id>/rentals", methods=["GET"])
 def get_rentals_by_customer_id(customer_id):
-    validate_id(customer_id, "customer_id")
+    validate_endpoint_id(customer_id, "customer_id")
     validate_customer_instance(customer_id)
 
     results = db.session.query(Rental, Customer, Video) \
