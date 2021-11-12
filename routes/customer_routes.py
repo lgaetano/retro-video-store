@@ -30,8 +30,26 @@ def timestamp():
 @customers_bp.route("", methods=["GET"])
 def get_all_customer():
     """Retrieves all customers from database."""
-    customers = Customer.query.all()
-    return jsonify([customer.to_dict() for customer in customers]), 200
+    query = Customer.query # Base query
+
+    # Accepted query params
+    sort = request.args.get("sort")
+    n = request.args.get("n")
+    p = request.args.get("p")
+
+    if sort == "name":
+        query = query.order_by(Customer.name)
+
+    if n and p:
+        query = query.paginate(page=int(p), per_page=int(n))
+    elif p:
+        query = query.paginate(page=int(p))
+    elif n:
+        query = query.paginate(per_page=int(n))
+    else:
+        query = query.all() # Final query
+
+    return jsonify([customer.to_dict() for customer in query.items]), 200
 
 @customers_bp.route("<customer_id>", methods=["GET"])
 def get_customer_by_id(customer_id):
