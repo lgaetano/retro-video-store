@@ -94,7 +94,7 @@ def get_rentals_by_video_id(video_id):
     response = []
     for rental,video, customer,  in results:
         response.append({
-            "due_date":rental.due_date,
+            "due_date":rental.calculate_due_date(),
             "name":customer.name,
             "phone":customer.phone,
             "postal_code":customer.postal_code
