@@ -43,7 +43,8 @@ def checkout_video():
     new_rental= Rental(
         customer_id = request_body["customer_id"],
         video_id = request_body["video_id"],
-        checkout_date = date.today()
+        checkout_date = date.today(),
+        checkout_status = True
     )
     db.session.add(new_rental)
     db.session.commit()
@@ -60,6 +61,7 @@ def check_in_video():
     if not rental:
         return jsonify({"message":f"No outstanding rentals for customer {request_body['customer_id']} and video {request_body['video_id']}"}),400
     
-    db.session.delete(rental)
+    rental.checkout_status = False
+    # db.session.delete(rental)
     db.session.commit() 
     return jsonify(rental.check_in_to_dict()),200
