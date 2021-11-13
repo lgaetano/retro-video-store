@@ -19,6 +19,15 @@ def timestamp():
     return now
 
 def query_params():
+    """Assembles query based off query parameters: 
+    
+    'sort' : sort data by 'name', 'registered_at', and 'postal_code'
+    'n' : items per page
+    'p' : page number.
+    
+    Function returns assembled query and 'True' if return objects is a
+    Pagination object, 'False' if a list.
+    """
     query = Customer.query
     # Accepted query params
     sort = request.args.get("sort")
@@ -112,6 +121,7 @@ def delete_customer(customer_id):
 @customers_bp.route("<customer_id>/rentals", methods=["GET"])
 @validate_endpoint_is_int
 def get_rentals_by_customer_id(customer_id):
+    """Returns list of videos currently assigned to customer."""
     validate_customer_instance(customer_id)
 
     results = db.session.query(Rental, Customer, Video) \
