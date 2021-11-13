@@ -3,6 +3,7 @@ from app.models.customer import Customer
 from app.models.rental import Rental
 from app.models.video import Video
 from flask import Blueprint, jsonify,request, make_response, abort 
+from sqlalchemy import func
 
 customers_bp = Blueprint("customers", __name__,url_prefix="/customers")
 rentals_bp = Blueprint("rentals",__name__,url_prefix="/rentals")
@@ -25,18 +26,36 @@ def validate_request_body(request_body):
         if key not in request_body:
             abort(make_response({"details":f'Request body must include {key}.'},400))
     
-
 @videos_bp.route("",methods=["GET"])
-def handle_videos():
-    videos = Video.query.all()
-    response_body= [video.video_dict() for video in videos]
-    return jsonify(response_body),200
+def get_videos_apply_query_params():
+    query_param = [key for key in request.args.keys()]
+    page = request.args.get("page",1,type=int)
+    ROWS_PER_PAGE = 3
+    if  query_param == []:
+        videos = Video.query.order_by(Video.id.asc())
+    elif "page" in query_param and "sort" in query_param and request.args.get("sort") == "title":
+        try:
+            videos = Video.query.order_by(func.lower(Video.title)).paginate(page=page, per_page=ROWS_PER_PAGE)
+            videos = videos.items
+        except:
+            abort(make_response({"details":"Page not found."},404))
+    elif "sort" in query_param and request.args.get("sort") == "title":
+        videos = Video.query.order_by(func.lower(Video.title))
+    elif "sort" in query_param and request.args.get("sort") == "date":
+        videos = Video.query.order_by(Video.release_date)
+    elif "page" in query_param:
+        try:
+            videos = Video.query.order_by(Video.id).paginate(page=page, per_page=ROWS_PER_PAGE)
+            videos = videos.items
+        except:
+            abort(make_response({"details":"Page out of range."},400))
+    response_body = [video.video_dict() for video in videos]
+    return jsonify(response_body),200  
 
 @videos_bp.route("/<video_id>",methods=["GET","DELETE","PUT"])
 def handle_video(video_id):
     valid_int(video_id,"video_id")
     video =validate_video_existence(video_id)
-    
     if request.method == "GET":
         return jsonify(video.video_dict()),200
     elif request.method == "DELETE":
@@ -81,5 +100,7 @@ def get_rentals_by_video_id(video_id):
             "postal_code":customer.postal_code
         })
     return jsonify(response),200
-                        
+
+
+
 
