@@ -55,7 +55,7 @@ def query_params():
     return query, True
 
 @customers_bp.route("", methods=["GET"])
-def get_all_customer():
+def get_all_customers():
     """Retrieves all customers from database."""
     query, paginated = query_params()
     if paginated:
@@ -124,15 +124,32 @@ def get_rentals_by_customer_id(customer_id):
     """Returns list of videos currently assigned to customer."""
     validate_customer_instance(customer_id)
 
-    results = db.session.query(Rental, Customer, Video) \
+    rentals = db.session.query(Rental, Customer, Video) \
                         .select_from(Rental).join(Customer).join(Video).all()
     
     response = []
-    for rental, customer, video in results:
+    for rental, customer, video in rentals:
         response.append({
             "release_date": video.release_date,
             "title": video.title,
-            "due_date": rental.due_date,
+            "due_date": rental.calculate_due_date(),
     })
         
     return jsonify(response), 200
+
+@customers_bp.route("/<customer_id>/history", methods=["GET"])
+@validate_endpoint_is_int
+def get_customer_rental_history(customer_id):
+    """Returns list of all videos a customer has checked out in the past"""
+    validate_customer_instance(customer_id)
+
+    rentals = db.session.query(Rental, Customer, Video) \
+                        .select_from(Rental).join(Customer).join(Video).all()
+
+    response = []
+    for rental, customer, video in rentals:
+        response.append({
+            "title": video.title,
+            "checkout_date": rental.calculate_checkout_date(),
+            "due_date": rental.calculate_due_date()
+        })
