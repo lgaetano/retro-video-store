@@ -101,6 +101,22 @@ def get_rentals_by_video_id(video_id):
         })
     return jsonify(response),200
 
-
+@videos_bp.route("<video_id>",methods=["get"])
+def video_customer_rental_history(video_id):
+    valid_int(video_id, "video_id")
+    video = validate_video_existence(video_id)
+    results = db.session.query(Rental,Video, Customer ) \
+                        .select_from(Rental).join(Video).join(Customer).all()
+    response = []
+    for rental,video, customer,  in results:
+        response.append({
+            "id":customer.id,
+            "name":customer.name,
+            "postal_code":customer.postal_code,
+            "checkout_date":customer.registered_at,
+            "due_date":rental.due_date,
+        })
+    return jsonify(response),200
+    
 
 
