@@ -40,15 +40,18 @@ def query_params():
     elif sort == "postal_code":
         query = query.order_by(Customer.postal_code)
 
-    if n and p:
-        query = query.paginate(page=int(p), per_page=int(n))
-    elif p:
-        query = query.paginate(page=int(p))
-    elif n:
-        query = query.paginate(per_page=int(n))
-    else:
-        query = query.all() # Final query, not paginated
-        return query, False
+    try:
+        if n and p:
+            query = query.paginate(page=int(p), per_page=int(n))          
+        elif p:
+            query = query.paginate(page=int(p))
+        elif n:
+            query = query.paginate(per_page=int(n))
+        else:
+            query = query.all() # Final query, not paginated
+            return query, False
+    except:
+        abort(make_response({"details":"Page not found."},404))
 
     # Final query, paginated
     return query, True
