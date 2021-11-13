@@ -6,14 +6,13 @@ from datetime import date, timedelta
 class Rental(db.Model):
     customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), primary_key=True, nullable=False)
     video_id = db.Column(db.Integer, db.ForeignKey('video.id'), primary_key=True, nullable=False)
-    due_date = db.Column(db.DateTime)
+    checkout_date = db.Column(db.DateTime)
     
     def calculate_due_date(self):
         """Calculates due date as seven days from today. """
-        today = date.today()
-        due_date = str(today + timedelta(days=7))
+        due_date = str(self.checkout_date + timedelta(days=7))
         return due_date
-    
+
     def get_cout_checkedout_for_specific_video(self,video_id):
         rentals = Rental.query.filter_by(video_id=video_id)
         return rentals.count()
@@ -22,16 +21,13 @@ class Rental(db.Model):
         video=Video.query.get(video_id)
         return video.total_inventory - self.get_cout_checkedout_for_specific_video(video_id)
         
-
     def checkout_to_dict(self):
         """Returns dictionary for rentals/check-out route."""
         return {
             "customer_id": self.customer_id,
             "video_id": self.video_id,
             "due_date": self.calculate_due_date(),
-            # "videos_checked_out_count": Customer.videos_checked_out_count,
             "videos_checked_out_count": self.get_cout_checkedout_for_specific_video(self.video_id),
-            # "available_inventory": Video.total_inventory - Customer.videos_checked_out_count
             "available_inventory": self.get_available_inventory_for_specific_video(self.video_id)
         }
 
