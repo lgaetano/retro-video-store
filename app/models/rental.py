@@ -14,7 +14,7 @@ class Rental(db.Model):
         due_date = str(self.checkout_date + timedelta(days=7))
         return due_date
 
-    def get_cout_checkedout_for_specific_video(self,video_id):
+    def get_count_checkedout_for_specific_video(self,video_id):
         rentals = Rental.query.filter_by(video_id=video_id).filter_by(checkout_status=True).all()
         return len(rentals)
     
@@ -28,7 +28,7 @@ class Rental(db.Model):
             "customer_id": self.customer_id,
             "video_id": self.video_id,
             "due_date": self.calculate_due_date(),
-            "videos_checked_out_count": self.get_cout_checkedout_for_specific_video(self.video_id),
+            "videos_checked_out_count": self.get_count_checkedout_for_specific_video(self.video_id),
             "available_inventory": self.get_available_inventory_for_specific_video(self.video_id)
         }
 
