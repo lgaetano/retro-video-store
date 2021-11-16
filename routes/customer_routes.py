@@ -1,11 +1,15 @@
 from app import db
+from flask import Blueprint, jsonify,request, make_response, abort
+from sqlalchemy import func
 from app.models.customer import Customer
 from app.models.rental import Rental
 from app.models.video import Video
-# from app.utils.validation_decorators import validate_kwarg
-from flask import Blueprint, jsonify,request, make_response, abort 
+
+from utils.customer_validations import validate_request_body, validate_customer_instance,\
+        validate_postal_code, validate_phone_number
+from utils.endpoint_validation import validate_endpoint_is_int
+
 from datetime import date, datetime, timezone
-import re
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 
@@ -20,26 +24,48 @@ def timestamp():
     """
     Determines current time and formats to specficiation.
     e.g. "Wed, 16 Apr 2014 21:40:20 -0700"""
-    #TODO: fix datetime formatting
-    #TODO: Should this go here? Customer method?
-    now = datetime.now(timezone.utc).astimezone().strftime("%a, %d %b %Y %H:%M:%S %z")
-    print(now) # Sat, 06 Nov 2021 21:37:21 -0700 (DOESN'T PRINT THIS WAY IN POSTMAN)
+
+    now = datetime.now(timezone.utc).astimezone() #.strftime("%a, %d %b %Y %H:%M:%S %z")
     return now
 
-#TODO: SHOULD FLASK METHODS BE COMPLETELY SEPARATE FROM MODELS??
-def validate_phone_number(phone_num):
-    """Uses regex to confirm phone data matches standard US phone number."""
-    basic_phone_num = re.compile("(\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4}|\(\d{3}\)\s*\d{3}[-\.\s]??\d{4})")
-    if re.fullmatch(basic_phone_num, phone_num):
-        return True
-    return False
+def query_params():
+    """Assembles query based off query parameters: 
+    
+    'sort' : sort data by 'name', 'registered_at', and 'postal_code'
+    'n' : items per page
+    'p' : page number.
+    
+    Function returns assembled query and 'True' if return objects is a
+    Pagination object, 'False' if a list.
+    """
+    query = Customer.query
+    # Accepted query params
+    sort = request.args.get("sort")
+    n = request.args.get("n")
+    p = request.args.get("p")
 
-def validate_postal_code(postal_code):
-    """Uses regex to confirm zipcode data matches standard US zipcode."""
-    basic_zipcode = re.compile("\d{5}")
-    if re.fullmatch(basic_zipcode, postal_code):
-        return True
-    return False
+    if sort == "name":
+        query = query.order_by(func.lower(Customer.name))
+    elif sort == "registered_at":
+        query = query.order_by(Customer.registered_at.desc())
+    elif sort == "postal_code":
+        query = query.order_by(Customer.postal_code)
+
+    try:
+        if n and p:
+            query = query.paginate(page=int(p), per_page=int(n))          
+        elif p:
+            query = query.paginate(page=int(p))
+        elif n:
+            query = query.paginate(per_page=int(n))
+        else:
+            query = query.all() # Final query, not paginated
+            return query, False
+    except:
+        abort(make_response({"details":"Page not found."},404))
+
+    # Final query, paginated
+    return query, True
 
 def validate_customer_instance(id):
     """
@@ -60,35 +86,41 @@ def validate_form_data(form_data):
     return True
 
 @customers_bp.route("", methods=["GET"])
-def get_all_customer():
+def get_all_customers():
     """Retrieves all customers from database."""
-    customers = Customer.query.all()
-    return jsonify([customer.to_dict() for customer in customers]), 200
 
-@customers_bp.route("<customer_id>", methods=["GET"])
-# @validate_kwarg
+    query, paginated = query_params()
+    if paginated:
+        # If query is Pagination obj, requires .items
+        return jsonify([customer.to_dict() for customer in query.items]), 200
+    return jsonify([customer.to_dict() for customer in query]), 200
+
+
+@customers_bp.route("/<customer_id>", methods=["GET"])
+@validate_endpoint_is_int
 def get_customer_by_id(customer_id):
     """Retreives customer data by id."""
-    validate_endpoint_id(customer_id)
+
     customer = validate_customer_instance(customer_id)
     return jsonify(customer.to_dict())
 
 @customers_bp.route("", methods=["POST"])
 def create_customer():
     """Creates a customer from JSON user input."""
-    form_data = request.get_json()
-    validate_form_data(form_data)
 
-    if not validate_postal_code(form_data["postal_code"]):
+    request_body = request.get_json()
+    validate_request_body(request_body)
+
+    if not validate_postal_code(request_body["postal_code"]):
         return jsonify({"details": "Invalid format for postal_code."}), 400
-    if not validate_phone_number(form_data["phone"]):
+    if not validate_phone_number(request_body["phone"]):
         return jsonify({"details": "Invalid format for phone number."}), 400
 
     new_customer = Customer(
-        name=form_data["name"],
+        name=request_body["name"],
         registered_at=timestamp(),
-        postal_code=form_data["postal_code"],
-        phone=form_data["phone"]
+        postal_code=request_body["postal_code"],
+        phone=request_body["phone"]
     )
     db.session.add(new_customer)
     db.session.commit()
@@ -96,21 +128,25 @@ def create_customer():
     return jsonify({"id": new_customer.id}), 201
 
 @customers_bp.route("<customer_id>", methods=["PUT"])
+@validate_endpoint_is_int
 def update_customer_by_id(customer_id):
     """Updates all customer data by id"""
     customer = validate_customer_instance(customer_id)
 
-    form_data = request.get_json()
-    validate_form_data(form_data)
-    customer.update_from_response(form_data)
+
+    request_body = request.get_json()
+    validate_request_body(request_body)
+
+    customer.update_from_response(request_body)
     db.session.commit()
 
     return jsonify(customer.to_dict()), 200
 
 @customers_bp.route("<customer_id>", methods=["DELETE"])
+@validate_endpoint_is_int
 def delete_customer(customer_id):
     """Deletes customer account by id."""
-    validate_endpoint_id(customer_id)
+
     customer = validate_customer_instance(customer_id)
 
     db.session.delete(customer)
@@ -118,21 +154,41 @@ def delete_customer(customer_id):
 
     return jsonify({"id": customer.id}), 200
 
+
 @customers_bp.route("<customer_id>/rentals", methods=["GET"])
+@validate_endpoint_is_int
 def get_rentals_by_customer_id(customer_id):
-    """Retrieves all rentals associated with specific customer."""
-    validate_endpoint_id(customer_id)
+    """Returns list of videos currently assigned to customer."""
     validate_customer_instance(customer_id)
 
-    results = db.session.query(Rental, Customer, Video) \
+    rentals = db.session.query(Rental, Customer, Video) \
                         .select_from(Rental).join(Customer).join(Video).all()
     
     response = []
-    for rental, customer, video in results:
+    for rental, customer, video in rentals:
         response.append({
             "release_date": video.release_date,
             "title": video.title,
-            "due_date": rental.due_date,
+            "due_date": rental.calculate_due_date(),
     })
         
+    return jsonify(response), 200
+
+@customers_bp.route("/<customer_id>/history", methods=["GET"])
+@validate_endpoint_is_int
+def get_customer_rental_history(customer_id):
+    """Returns list of all videos a customer has checked out in the past"""
+    validate_customer_instance(customer_id)
+
+    rentals = db.session.query(Rental, Customer, Video) \
+                        .select_from(Rental).join(Customer).join(Video).all()
+
+    response = []
+    for rental, customer, video in rentals:
+        response.append({
+            "title": video.title,
+            "checkout_date": rental.calculate_checkout_date(),
+            "due_date": rental.calculate_due_date()
+        })
+
     return jsonify(response), 200

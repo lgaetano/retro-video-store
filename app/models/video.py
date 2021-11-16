@@ -7,7 +7,7 @@ class Video(db.Model):
     release_date = db.Column(db.DateTime)
     available_inventory = db.Column(db.Integer)
 
-    def to_dict(self):
+    def video_dict(self):
         """Returns model attributes in dict form."""
         return {
             "id": self.id,
