@@ -3,6 +3,7 @@ from app.models.customer import Customer
 from app.models.rental import Rental
 from app.models.video import Video
 from flask import Blueprint, jsonify,request, make_response, abort 
+
 from sqlalchemy import func
 
 customers_bp = Blueprint("customers", __name__,url_prefix="/customers")
@@ -117,6 +118,3 @@ def video_customer_rental_history(video_id):
             "due_date":rental.due_date,
         })
     return jsonify(response),200
-    
-
-

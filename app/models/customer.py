@@ -8,7 +8,9 @@ class Customer(db.Model):
     postal_code = db.Column(db.String)
     phone = db.Column(db.String)
     videos_checked_out_count = db.Column(db.Integer)
+    
     videos = db.relationship("Video",secondary="rental", backref="customers")
+
     
     def to_dict(self):
         return {

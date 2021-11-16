@@ -3,6 +3,7 @@ from app.models.customer import Customer
 from app.models.rental import Rental
 from app.models.video import Video
 from flask import Blueprint, jsonify,request, make_response, abort 
+
 from datetime import date, timedelta
 
 rentals_bp = Blueprint("rentals",__name__,url_prefix="/rentals")

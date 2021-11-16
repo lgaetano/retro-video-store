@@ -28,6 +28,7 @@ class Rental(db.Model):
             "customer_id": self.customer_id,
             "video_id": self.video_id,
             "due_date": self.calculate_due_date(),
+
             "videos_checked_out_count": self.get_count_checkedout_for_specific_video(self.video_id),
             "available_inventory": self.get_available_inventory_for_specific_video(self.video_id)
         }
@@ -37,6 +38,7 @@ class Rental(db.Model):
         return {
             "customer_id": self.customer_id,
             "video_id": self.video_id,
+          
             "videos_checked_out_count": self.get_count_checkedout_for_specific_video(self.video_id),
             "available_inventory": self.get_available_inventory_for_specific_video(self.video_id) 
         }
