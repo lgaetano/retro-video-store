@@ -7,9 +7,11 @@ class Video(db.Model):
     release_date = db.Column(db.DateTime)
     available_inventory = db.Column(db.Integer)
     
-    
+    @classmethod
+    def from_dict(cls, values):
+        return cls(**values)
+
     def video_dict(self):
-        
         return{
             "id":self.id,
             "title":self.title,
