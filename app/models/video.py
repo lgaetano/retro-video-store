@@ -18,5 +18,11 @@ class Video(db.Model):
             "total_inventory":self.total_inventory,
             "release_date":self.release_date
         }
-        
-            
+
+    def updates_from_dict(self, data):
+        """
+        Updates attributes from user data, restricting access to attributes
+        that are columns."""
+        for key, value in data.items():
+            if key in Video.__table__.columns.keys():
+                setattr(self, key, value)

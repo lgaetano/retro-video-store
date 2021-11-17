@@ -4,17 +4,27 @@ from sqlalchemy import func
 from app.models.customer import Customer
 from app.models.rental import Rental
 from app.models.video import Video
+
 from utils.customer_validations import validate_request_body, validate_customer_instance,\
         validate_postal_code, validate_phone_number
 from utils.endpoint_validation import validate_endpoint_is_int
+
 from datetime import date, datetime, timezone
 
 bp = Blueprint("customers", __name__, url_prefix="/customers")
+
+def validate_endpoint_id(id):
+    """Validates id for endpoint is an integer."""
+    try:
+        int(id)
+    except:
+        abort(make_response({f"details": "Endpoint must be an int."}, 400))
 
 def timestamp():
     """
     Determines current time and formats to specficiation.
     e.g. "Wed, 16 Apr 2014 21:40:20 -0700"""
+
     now = datetime.now(timezone.utc).astimezone() #.strftime("%a, %d %b %Y %H:%M:%S %z")
     return now
 
@@ -57,9 +67,34 @@ def query_params():
     # Final query, paginated
     return query, True
 
+<<<<<<< HEAD:app/routes/customer_routes.py
 @bp.route("", methods=["GET"])
+||||||| a1d2135:routes/customer_routes.py
+@customers_bp.route("", methods=["GET"])
+=======
+def validate_customer_instance(id):
+    """
+    Function that validates the existence of customer instance, and
+    returns instance of customer."""
+    # Validates customer instance exists
+    customer = Customer.query.get(id)
+    if not customer:
+        abort(make_response({"message": f"Customer {id} was not found"}, 404))
+    return customer
+
+def validate_form_data(form_data):
+    """Validates request body."""
+    mandatory_fields = ["name", "postal_code", "phone"]
+    for field in mandatory_fields:
+        if field not in form_data:
+            abort(make_response({"details": f"Request body must include {field}."}, 400))
+    return True
+
+@customers_bp.route("", methods=["GET"])
+>>>>>>> 68ba99d8b8afad0dd1e91aec71a51de40146e092:routes/customer_routes.py
 def get_all_customers():
     """Retrieves all customers from database."""
+
     query, paginated = query_params()
     if paginated:
         # If query is Pagination obj, requires .items
@@ -71,12 +106,14 @@ def get_all_customers():
 @validate_endpoint_is_int
 def get_customer_by_id(customer_id):
     """Retreives customer data by id."""
+
     customer = validate_customer_instance(customer_id)
     return jsonify(customer.to_dict())
 
 @bp.route("", methods=["POST"])
 def create_customer():
     """Creates a customer from JSON user input."""
+
     request_body = request.get_json()
     validate_request_body(request_body)
 
@@ -91,9 +128,9 @@ def create_customer():
         postal_code=request_body["postal_code"],
         phone=request_body["phone"]
     )
-
     db.session.add(new_customer)
     db.session.commit()
+    
     return jsonify({"id": new_customer.id}), 201
 
 @bp.route("<customer_id>", methods=["PUT"])
@@ -101,6 +138,7 @@ def create_customer():
 def update_customer_by_id(customer_id):
     """Updates all customer data by id"""
     customer = validate_customer_instance(customer_id)
+
 
     request_body = request.get_json()
     validate_request_body(request_body)
@@ -114,7 +152,9 @@ def update_customer_by_id(customer_id):
 @validate_endpoint_is_int
 def delete_customer(customer_id):
     """Deletes customer account by id."""
+
     customer = validate_customer_instance(customer_id)
+
     db.session.delete(customer)
     db.session.commit()
 
