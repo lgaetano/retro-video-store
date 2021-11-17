@@ -5,9 +5,7 @@ from app.models.video import Video
 from flask import Blueprint, jsonify,request, make_response, abort 
 from sqlalchemy import func
 
-customers_bp = Blueprint("customers", __name__,url_prefix="/customers")
-rentals_bp = Blueprint("rentals",__name__,url_prefix="/rentals")
-videos_bp = Blueprint("videos",__name__,url_prefix="/videos")
+bp = Blueprint("videos",__name__,url_prefix="/videos")
 
 # helper function
 def valid_int(number,parameter_type):
@@ -26,7 +24,7 @@ def validate_request_body(request_body):
         if key not in request_body:
             abort(make_response({"details":f'Request body must include {key}.'},400))
     
-@videos_bp.route("",methods=["GET"])
+@bp.route("",methods=["GET"])
 def get_videos_apply_query_params():
     query_param = [key for key in request.args.keys()]
     page = request.args.get("page",1,type=int)
@@ -52,7 +50,7 @@ def get_videos_apply_query_params():
     response_body = [video.video_dict() for video in videos]
     return jsonify(response_body),200  
 
-@videos_bp.route("/<video_id>",methods=["GET","DELETE","PUT"])
+@bp.route("/<video_id>",methods=["GET","DELETE","PUT"])
 def handle_video(video_id):
     valid_int(video_id,"video_id")
     video =validate_video_existence(video_id)
@@ -71,7 +69,7 @@ def handle_video(video_id):
         db.session.commit() 
         return jsonify(video.video_dict()),200
     
-@videos_bp.route("",methods=["POST"])
+@bp.route("",methods=["POST"])
 def create_video():
     request_body = request.get_json()
     validate_request_body(request_body)
@@ -84,7 +82,7 @@ def create_video():
     db.session.commit()
     return jsonify(new_video.video_dict()),201      
     
-@videos_bp.route("<video_id>/rentals", methods=["GET"])
+@bp.route("<video_id>/rentals", methods=["GET"])
 def get_rentals_by_video_id(video_id):
     """Retrieves all rentals associated with a specific video."""
     valid_int(video_id, "video_id")
@@ -101,7 +99,7 @@ def get_rentals_by_video_id(video_id):
         })
     return jsonify(response),200
 
-@videos_bp.route("<video_id>",methods=["get"])
+@bp.route("<video_id>",methods=["get"])
 def video_customer_rental_history(video_id):
     valid_int(video_id, "video_id")
     video = validate_video_existence(video_id)

@@ -14,6 +14,7 @@ def create_app(test_config=None):
     app = Flask(__name__)
     app.url_map.strict_slashes = False
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["SQLALCHEMY_ECHO"] = True
 
     if test_config is None:
         app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
@@ -23,25 +24,15 @@ def create_app(test_config=None):
         app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
             "SQLALCHEMY_TEST_DATABASE_URI")
 
-    
-    # import models for Alembic Setup
-    from app.models.customer import Customer
-    from app.models.video import Video
-    from app.models.rental import Rental
-
     # Setup DB
     db.init_app(app)
     migrate.init_app(app, db)
 
-    #Register Blueprints Here
-    from routes.customer_routes import customers_bp
-    app.register_blueprint(customers_bp)
-    
-    from routes.rental_routes import rentals_bp
-    app.register_blueprint(rentals_bp)
-    
-    from routes.video_routes import videos_bp
-    app.register_blueprint(videos_bp)
+    # import models for Alembic Setup and register Blueprints
+    from .routes import customer, video, rental
+    app.register_blueprint(customer.bp)
+    app.register_blueprint(rental.bp)
+    app.register_blueprint(video.bp)
 
     @click.add_command('db_seed')
     def db_seed():

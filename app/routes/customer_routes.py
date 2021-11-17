@@ -9,7 +9,7 @@ from utils.customer_validations import validate_request_body, validate_customer_
 from utils.endpoint_validation import validate_endpoint_is_int
 from datetime import date, datetime, timezone
 
-customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
+bp = Blueprint("customers", __name__, url_prefix="/customers")
 
 def timestamp():
     """
@@ -57,7 +57,7 @@ def query_params():
     # Final query, paginated
     return query, True
 
-@customers_bp.route("", methods=["GET"])
+@bp.route("", methods=["GET"])
 def get_all_customers():
     """Retrieves all customers from database."""
     query, paginated = query_params()
@@ -67,14 +67,14 @@ def get_all_customers():
     return jsonify([customer.to_dict() for customer in query]), 200
 
 
-@customers_bp.route("/<customer_id>", methods=["GET"])
+@bp.route("/<customer_id>", methods=["GET"])
 @validate_endpoint_is_int
 def get_customer_by_id(customer_id):
     """Retreives customer data by id."""
     customer = validate_customer_instance(customer_id)
     return jsonify(customer.to_dict())
 
-@customers_bp.route("", methods=["POST"])
+@bp.route("", methods=["POST"])
 def create_customer():
     """Creates a customer from JSON user input."""
     request_body = request.get_json()
@@ -96,7 +96,7 @@ def create_customer():
     db.session.commit()
     return jsonify({"id": new_customer.id}), 201
 
-@customers_bp.route("<customer_id>", methods=["PUT"])
+@bp.route("<customer_id>", methods=["PUT"])
 @validate_endpoint_is_int
 def update_customer_by_id(customer_id):
     """Updates all customer data by id"""
@@ -110,7 +110,7 @@ def update_customer_by_id(customer_id):
 
     return jsonify(customer.to_dict()), 200
 
-@customers_bp.route("<customer_id>", methods=["DELETE"])
+@bp.route("<customer_id>", methods=["DELETE"])
 @validate_endpoint_is_int
 def delete_customer(customer_id):
     """Deletes customer account by id."""
@@ -121,7 +121,7 @@ def delete_customer(customer_id):
     return jsonify({"id": customer.id}), 200
 
 
-@customers_bp.route("<customer_id>/rentals", methods=["GET"])
+@bp.route("<customer_id>/rentals", methods=["GET"])
 @validate_endpoint_is_int
 def get_rentals_by_customer_id(customer_id):
     """Returns list of videos currently assigned to customer."""
@@ -140,7 +140,7 @@ def get_rentals_by_customer_id(customer_id):
         
     return jsonify(response), 200
 
-@customers_bp.route("/<customer_id>/history", methods=["GET"])
+@bp.route("/<customer_id>/history", methods=["GET"])
 @validate_endpoint_is_int
 def get_customer_rental_history(customer_id):
     """Returns list of all videos a customer has checked out in the past"""
