@@ -7,7 +7,7 @@ import click
 def seed():
     """Uses Faker package to generate fake customer data for db."""
     fake = Faker()
-    for _ in range(20):
+    for i in range(20):
         new_customer = Customer(
             name=fake.name(),
             registered_at=datetime.now(timezone.utc).astimezone(),

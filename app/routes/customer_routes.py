@@ -67,31 +67,7 @@ def query_params():
     # Final query, paginated
     return query, True
 
-<<<<<<< HEAD:app/routes/customer_routes.py
 @bp.route("", methods=["GET"])
-||||||| a1d2135:routes/customer_routes.py
-@customers_bp.route("", methods=["GET"])
-=======
-def validate_customer_instance(id):
-    """
-    Function that validates the existence of customer instance, and
-    returns instance of customer."""
-    # Validates customer instance exists
-    customer = Customer.query.get(id)
-    if not customer:
-        abort(make_response({"message": f"Customer {id} was not found"}, 404))
-    return customer
-
-def validate_form_data(form_data):
-    """Validates request body."""
-    mandatory_fields = ["name", "postal_code", "phone"]
-    for field in mandatory_fields:
-        if field not in form_data:
-            abort(make_response({"details": f"Request body must include {field}."}, 400))
-    return True
-
-@customers_bp.route("", methods=["GET"])
->>>>>>> 68ba99d8b8afad0dd1e91aec71a51de40146e092:routes/customer_routes.py
 def get_all_customers():
     """Retrieves all customers from database."""
 
