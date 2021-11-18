@@ -11,25 +11,32 @@ def validate_endpoint(endpoint):
     @wraps(endpoint) # Makes fn look like func to return
     def fn(*args, **kwargs):
         """Validates id for endpoint is an integer."""
-        endpoint_ids = ["customer_id", "video_id"]
-        if "customer_id" in endpoint_ids:
+        if "customer_id" in kwargs:
             customer_id = kwargs.get("customer_id", None)
             try:
                 int(customer_id)
             except:
                 abort(make_response({f"details": f"{customer_id} must be an int."}, 400))
             
-            kwargs.pop("customer_id")
-            return endpoint(*args, customer_id=customer_id, **kwargs)
+            customer = Customer.query.get(customer_id)
+            if not customer:
+                abort(make_response({"message" :f"Customer {customer_id} was not found"}, 404))
 
-        elif "video_id" in endpoint_ids:
+            kwargs.pop("customer_id")
+            return endpoint(*args, customer=customer, **kwargs)
+
+        elif "video_id" in kwargs:
             video_id = kwargs.get("video_id", None)
             try:
                 int(video_id)
             except:
                 abort(make_response({f"details": f"{video_id} must be an int."}, 400))
+
+            video = Video.query.get(video_id)
+            if not video:
+                abort(make_response({"message" :f"Video {video_id} was not found"}, 404))
             
             kwargs.pop("video_id")
-            return endpoint(*args, video_id=video_id, **kwargs)
+            return endpoint(*args, video=video, **kwargs)
 
     return fn

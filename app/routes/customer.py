@@ -76,12 +76,10 @@ def get_all_customers():
         return jsonify([customer.to_dict() for customer in query.items]), 200
     return jsonify([customer.to_dict() for customer in query]), 200
 
-
 @bp.route("/<customer_id>", methods=["GET"])
 @validate_endpoint
-def get_customer_by_id(customer_id):
+def get_customer_by_id(customer):
     """Retreives customer data by id."""
-    customer = validate_customer_instance(customer_id)
     return jsonify(customer.to_dict()), 200
 
 @bp.route("", methods=["POST"])
@@ -108,10 +106,8 @@ def create_customer():
 
 @bp.route("<customer_id>", methods=["PUT"])
 @validate_endpoint
-def update_customer_by_id(customer_id):
+def update_customer_by_id(customer):
     """Updates all customer data by id"""
-    customer = validate_customer_instance(customer_id)
-
     request_body = request.get_json()
     validate_request_body(request_body)
 
@@ -121,10 +117,8 @@ def update_customer_by_id(customer_id):
 
 @bp.route("<customer_id>", methods=["DELETE"])
 @validate_endpoint
-def delete_customer(customer_id):
+def delete_customer(customer):
     """Deletes customer account by id."""
-    customer = validate_customer_instance(customer_id)
-
     db.session.delete(customer)
     db.session.commit()
 
@@ -133,10 +127,8 @@ def delete_customer(customer_id):
 
 @bp.route("<customer_id>/rentals", methods=["GET"])
 @validate_endpoint
-def get_rentals_by_customer_id(customer_id):
+def get_rentals_by_customer_id(customer):
     """Returns list of videos currently assigned to customer."""
-    validate_customer_instance(customer_id)
-
     rentals = db.session.query(Rental, Customer, Video) \
                         .select_from(Rental).join(Customer).join(Video).all()
     
@@ -152,10 +144,8 @@ def get_rentals_by_customer_id(customer_id):
 
 @bp.route("/<customer_id>/history", methods=["GET"])
 @validate_endpoint
-def get_customer_rental_history(customer_id):
+def get_customer_rental_history(customer):
     """Returns list of all videos a customer has checked out in the past"""
-    validate_customer_instance(customer_id)
-
     rentals = db.session.query(Rental, Customer, Video) \
                         .select_from(Rental).join(Customer).join(Video).all()
 

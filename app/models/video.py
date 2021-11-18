@@ -19,7 +19,7 @@ class Video(db.Model):
             "release_date":self.release_date
         }
 
-    def updates_from_response(self, data):
+    def update_from_response(self, data):
         """
         Updates attributes from user data, restricting access to attributes
         that are columns."""
