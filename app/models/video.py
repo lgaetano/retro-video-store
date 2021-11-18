@@ -6,17 +6,20 @@ class Video(db.Model):
     total_inventory = db.Column(db.Integer)
     release_date = db.Column(db.DateTime)
     available_inventory = db.Column(db.Integer)
+    
+    @classmethod
+    def from_dict(cls, values):
+        return cls(**values)
 
-    def video_dict(self):
-        """Returns model attributes in dict form."""
-        return {
-            "id": self.id,
-            "title": self.title,
-            "release_date": self.release_date,
-            "total_inventory": self.total_inventory
+    def to_dict(self):
+        return{
+            "id":self.id,
+            "title":self.title,
+            "total_inventory":self.total_inventory,
+            "release_date":self.release_date
         }
 
-    def updates_from_dict(self, data):
+    def update_from_response(self, data):
         """
         Updates attributes from user data, restricting access to attributes
         that are columns."""

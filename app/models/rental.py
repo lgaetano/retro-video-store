@@ -9,6 +9,10 @@ class Rental(db.Model):
     checkout_date = db.Column(db.DateTime)
     checkout_status = db.Column(db.Boolean, default=True)
     
+    @classmethod
+    def from_dict(cls, values):
+        return cls(**values)
+    
     def calculate_due_date(self):
         """Calculates due date as seven days from today. """
         due_date = str(self.checkout_date + timedelta(days=7))

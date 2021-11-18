@@ -4,14 +4,13 @@ from sqlalchemy import func
 from app.models.customer import Customer
 from app.models.rental import Rental
 from app.models.video import Video
-
-from utils.customer_validations import validate_request_body, validate_customer_instance,\
+from app.utils.customer_validations import validate_request_body, validate_customer_instance,\
         validate_postal_code, validate_phone_number
-from utils.endpoint_validation import validate_endpoint_is_int
+from app.utils.endpoint_validation import validate_endpoint
 
 from datetime import date, datetime, timezone
 
-customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
+bp = Blueprint("customers", __name__, url_prefix="/customers")
 
 def validate_endpoint_id(id):
     """Validates id for endpoint is an integer."""
@@ -39,6 +38,7 @@ def query_params():
     Pagination object, 'False' if a list.
     """
     query = Customer.query
+
     # Accepted query params
     sort = request.args.get("sort")
     n = request.args.get("n")
@@ -67,47 +67,24 @@ def query_params():
     # Final query, paginated
     return query, True
 
-def validate_customer_instance(id):
-    """
-    Function that validates the existence of customer instance, and
-    returns instance of customer."""
-    # Validates customer instance exists
-    customer = Customer.query.get(id)
-    if not customer:
-        abort(make_response({"message": f"Customer {id} was not found"}, 404))
-    return customer
-
-def validate_form_data(form_data):
-    """Validates request body."""
-    mandatory_fields = ["name", "postal_code", "phone"]
-    for field in mandatory_fields:
-        if field not in form_data:
-            abort(make_response({"details": f"Request body must include {field}."}, 400))
-    return True
-
-@customers_bp.route("", methods=["GET"])
+@bp.route("", methods=["GET"])
 def get_all_customers():
     """Retrieves all customers from database."""
-
     query, paginated = query_params()
     if paginated:
         # If query is Pagination obj, requires .items
         return jsonify([customer.to_dict() for customer in query.items]), 200
     return jsonify([customer.to_dict() for customer in query]), 200
 
-
-@customers_bp.route("/<customer_id>", methods=["GET"])
-@validate_endpoint_is_int
-def get_customer_by_id(customer_id):
+@bp.route("/<customer_id>", methods=["GET"])
+@validate_endpoint
+def get_customer_by_id(customer):
     """Retreives customer data by id."""
+    return jsonify(customer.to_dict()), 200
 
-    customer = validate_customer_instance(customer_id)
-    return jsonify(customer.to_dict())
-
-@customers_bp.route("", methods=["POST"])
+@bp.route("", methods=["POST"])
 def create_customer():
     """Creates a customer from JSON user input."""
-
     request_body = request.get_json()
     validate_request_body(request_body)
 
@@ -127,40 +104,31 @@ def create_customer():
     
     return jsonify({"id": new_customer.id}), 201
 
-@customers_bp.route("<customer_id>", methods=["PUT"])
-@validate_endpoint_is_int
-def update_customer_by_id(customer_id):
+@bp.route("<customer_id>", methods=["PUT"])
+@validate_endpoint
+def update_customer_by_id(customer):
     """Updates all customer data by id"""
-    customer = validate_customer_instance(customer_id)
-
-
     request_body = request.get_json()
     validate_request_body(request_body)
 
     customer.update_from_response(request_body)
     db.session.commit()
-
     return jsonify(customer.to_dict()), 200
 
-@customers_bp.route("<customer_id>", methods=["DELETE"])
-@validate_endpoint_is_int
-def delete_customer(customer_id):
+@bp.route("<customer_id>", methods=["DELETE"])
+@validate_endpoint
+def delete_customer(customer):
     """Deletes customer account by id."""
-
-    customer = validate_customer_instance(customer_id)
-
     db.session.delete(customer)
     db.session.commit()
 
     return jsonify({"id": customer.id}), 200
 
 
-@customers_bp.route("<customer_id>/rentals", methods=["GET"])
-@validate_endpoint_is_int
-def get_rentals_by_customer_id(customer_id):
+@bp.route("<customer_id>/rentals", methods=["GET"])
+@validate_endpoint
+def get_rentals_by_customer_id(customer):
     """Returns list of videos currently assigned to customer."""
-    validate_customer_instance(customer_id)
-
     rentals = db.session.query(Rental, Customer, Video) \
                         .select_from(Rental).join(Customer).join(Video).all()
     
@@ -174,12 +142,10 @@ def get_rentals_by_customer_id(customer_id):
         
     return jsonify(response), 200
 
-@customers_bp.route("/<customer_id>/history", methods=["GET"])
-@validate_endpoint_is_int
-def get_customer_rental_history(customer_id):
+@bp.route("/<customer_id>/history", methods=["GET"])
+@validate_endpoint
+def get_customer_rental_history(customer):
     """Returns list of all videos a customer has checked out in the past"""
-    validate_customer_instance(customer_id)
-
     rentals = db.session.query(Rental, Customer, Video) \
                         .select_from(Rental).join(Customer).join(Video).all()
 

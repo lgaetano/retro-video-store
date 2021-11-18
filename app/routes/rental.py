@@ -6,7 +6,7 @@ from flask import Blueprint, jsonify,request, make_response, abort
 
 from datetime import date, timedelta
 
-rentals_bp = Blueprint("rentals",__name__,url_prefix="/rentals")
+bp = Blueprint("rentals",__name__,url_prefix="/rentals")
 
 def validate_request_body(request_body):
     """Validates request body."""
@@ -27,7 +27,7 @@ def validate_video_customer_existence(request_body):
 
     return customer, video
 
-@rentals_bp.route("/check-out",methods=["POST"])
+@bp.route("/check-out",methods=["POST"])
 def checkout_video():
     """Checks out a video to a customer, creating a new rental instance."""
     request_body = request.get_json()
@@ -50,7 +50,7 @@ def checkout_video():
     db.session.commit()
     return jsonify(new_rental.checkout_to_dict()),200
 
-@rentals_bp.route("/check-in",methods=["POST"])
+@bp.route("/check-in",methods=["POST"])
 def check_in_video():
     """Checks-in a video, deleting a new rental instance."""
     request_body = request.get_json()

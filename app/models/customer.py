@@ -11,7 +11,10 @@ class Customer(db.Model):
     
     videos = db.relationship("Video",secondary="rental", backref="customers")
 
-    
+    @classmethod
+    def from_dict(cls, values):
+        return cls(**values)
+
     def to_dict(self):
         return {
             "id": self.id,
