@@ -4,7 +4,7 @@ from flask_migrate import Migrate
 import os
 import click
 from dotenv import load_dotenv
-from seed.customer_data import seed
+# from .seed.customer_data import seed
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -34,9 +34,9 @@ def create_app(test_config=None):
     app.register_blueprint(rental.bp)
     app.register_blueprint(video.bp)
 
-    @click.add_command('db_seed')
-    def db_seed():
-        """Seeds db using CLI and Faker generator."""
-        seed()
+    # @click.add_command('db_seed')
+    # def db_seed():
+    #     """Seeds db using CLI and Faker generator."""
+    #     seed()
 
     return app
