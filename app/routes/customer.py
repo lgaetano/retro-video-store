@@ -4,10 +4,9 @@ from sqlalchemy import func
 from app.models.customer import Customer
 from app.models.rental import Rental
 from app.models.video import Video
-
-from utils.customer_validations import validate_request_body, validate_customer_instance,\
+from app.utils.customer_validations import validate_request_body, validate_customer_instance,\
         validate_postal_code, validate_phone_number
-from utils.endpoint_validation import validate_endpoint_is_int
+from app.utils.endpoint_validation import validate_endpoint_is_int
 
 from datetime import date, datetime, timezone
 
