@@ -4,7 +4,7 @@ from flask import make_response, abort
 from app.models.customer import Customer
 from app.models.video import Video
 
-def validate_endpoint_is_int(endpoint):
+def validate_endpoint(endpoint):
     """Decorator to validate that endpoint id is an int. Returns JSON and 
     400 if not found.
     """
@@ -21,5 +21,15 @@ def validate_endpoint_is_int(endpoint):
             
             kwargs.pop("customer_id")
             return endpoint(*args, customer_id=customer_id, **kwargs)
+
+        elif "video_id" in endpoint_ids:
+            video_id = kwargs.get("video_id", None)
+            try:
+                int(video_id)
+            except:
+                abort(make_response({f"details": f"{video_id} must be an int."}, 400))
+            
+            kwargs.pop("video_id")
+            return endpoint(*args, video_id=video_id, **kwargs)
 
     return fn

@@ -11,7 +11,7 @@ class Video(db.Model):
     def from_dict(cls, values):
         return cls(**values)
 
-    def video_dict(self):
+    def to_dict(self):
         return{
             "id":self.id,
             "title":self.title,
@@ -19,7 +19,7 @@ class Video(db.Model):
             "release_date":self.release_date
         }
 
-    def updates_from_dict(self, data):
+    def updates_from_response(self, data):
         """
         Updates attributes from user data, restricting access to attributes
         that are columns."""
