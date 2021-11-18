@@ -82,7 +82,7 @@ def get_all_customers():
 def get_customer_by_id(customer_id):
     """Retreives customer data by id."""
     customer = validate_customer_instance(customer_id)
-    return jsonify(customer.to_dict())
+    return jsonify(customer.to_dict()), 200
 
 @bp.route("", methods=["POST"])
 def create_customer():
@@ -117,7 +117,6 @@ def update_customer_by_id(customer_id):
 
     customer.update_from_response(request_body)
     db.session.commit()
-
     return jsonify(customer.to_dict()), 200
 
 @bp.route("<customer_id>", methods=["DELETE"])
